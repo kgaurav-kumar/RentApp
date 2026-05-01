@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Camera, Edit2, Save, Loader2, Phone } from 'lucide-react';
+import { LogOut, User, Camera, Edit2, Save, Loader2, Phone, Mail } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -148,6 +148,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSendEmail = (data, totalDue, totalUnits) => {
+    const subject = encodeURIComponent("Month-end Rent & Electricity Bill");
+    const body = encodeURIComponent(
+      `Hello ${data.name || 'Tenant'},\n\n` +
+      `Here are your bill details for this month:\n\n` +
+      `Rent Amount: Rs ${data.rent || 0}\n` +
+      `Electricity Consumed: ${totalUnits} units\n` +
+      `Electricity Charges: Rs ${totalUnits * (data.rate || 8)}\n` +
+      `---------------------------------------\n` +
+      `Total Amount Due: Rs ${totalDue}\n\n` +
+      `Please pay the total amount as soon as possible.\n\n` +
+      `Regards,\nAdmin`
+    );
+    window.location.href = `mailto:${data.email || ''}?subject=${subject}&body=${body}`;
+  };
+
   if (loading) {
     return (
       <div className="container flex-center" style={{ minHeight: '100vh' }}>
@@ -231,15 +247,20 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </div>
-                  {editingUser === id ? (
-                    <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => handleSave(id)}>
-                      <Save size={16} /> Save
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="btn" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '0.5rem 1rem' }} onClick={() => handleSendEmail(data, totalDue, totalUnits)}>
+                      <Mail size={16} /> Send Bill
                     </button>
-                  ) : (
-                    <button className="btn" style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.5rem 1rem' }} onClick={() => handleEdit(id)}>
-                      <Edit2 size={16} /> Edit
-                    </button>
-                  )}
+                    {editingUser === id ? (
+                      <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => handleSave(id)}>
+                        <Save size={16} /> Save
+                      </button>
+                    ) : (
+                      <button className="btn" style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.5rem 1rem' }} onClick={() => handleEdit(id)}>
+                        <Edit2 size={16} /> Edit
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
