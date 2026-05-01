@@ -31,7 +31,7 @@ export default function Login() {
     <div className="container flex-center" style={{ minHeight: '100vh' }}>
       <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>RentManager</h1>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>RentalOP Welcomes You!</h1>
           <p>Login to your account</p>
         </div>
 
