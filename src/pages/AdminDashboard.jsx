@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Camera, Edit2, Save, Loader2, Phone, Mail } from 'lucide-react';
+import { LogOut, User, Camera, Edit2, Save, Loader2, Phone, Mail, CheckCircle } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -148,6 +148,29 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleMarkPaid = async (userId, data) => {
+    if (!window.confirm(`Are you sure you want to mark ${data.name || 'Tenant'}'s payment as received?\n\nThis will set Rent to 0, and carry forward current meter readings as previous readings for the next month.`)) {
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, "users", userId), {
+        ...data,
+        rent: 0,
+        m1_prev: data.m1_curr || data.m1_prev || 0,
+        m2_prev: data.m2_curr || data.m2_prev || 0,
+        m1_prev_photo: data.m1_curr_photo || data.m1_prev_photo || null,
+        m2_prev_photo: data.m2_curr_photo || data.m2_prev_photo || null,
+        m1_curr_photo: null,
+        m2_curr_photo: null
+      }, { merge: true });
+      alert("Payment marked as received. Data has been reset for the next month.");
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      alert("Failed to update payment status.");
+    }
+  };
+
   const handleSendEmail = (data, totalDue, totalUnits) => {
     const subject = encodeURIComponent("Month-end Rent & Electricity Bill");
     const body = encodeURIComponent(
@@ -206,7 +229,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="container animate-fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem' }}>Admin Dashboard</h1>
           <p style={{ margin: 0 }}>Manage Tenants, Rent & Meters</p>
@@ -235,7 +258,7 @@ export default function AdminDashboard() {
 
             return (
               <div key={id} className="glass-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <div style={{ padding: '0.75rem', borderRadius: '50%', backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
                       <User color="var(--accent-primary)" size={24} />
@@ -247,7 +270,10 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button className="btn" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '0.5rem 1rem' }} onClick={() => handleMarkPaid(id, data)}>
+                      <CheckCircle size={16} /> Payment Received
+                    </button>
                     <button className="btn" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '0.5rem 1rem' }} onClick={() => handleSendEmail(data, totalDue, totalUnits)}>
                       <Mail size={16} /> Send Bill
                     </button>
