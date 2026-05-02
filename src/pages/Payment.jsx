@@ -18,23 +18,7 @@ export default function Payment() {
   // Use a reliable QR code generation API
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
 
-  const handleDownloadQR = async () => {
-    try {
-      const response = await fetch(qrCodeUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'RentApp_UPI_QR.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading QR:", error);
-      alert("Failed to download QR code. Please try again or take a screenshot.");
-    }
-  };
+
 
   return (
     <div className="container animate-fade-in" style={{ maxWidth: '500px', margin: '0 auto', paddingTop: '2rem' }}>
@@ -98,13 +82,7 @@ export default function Payment() {
             <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Paying to: <strong style={{ color: 'var(--text-primary)' }}>{upiName}</strong></p>
             <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0', fontSize: '0.8rem' }}>{upiId}</p>
             <p style={{ color: 'var(--accent-primary)', margin: '1.5rem 0 0.5rem 0', fontSize: '0.85rem', fontWeight: '500' }}>Note: Payment is updated in 30min after the payment.</p>
-            <button 
-              className="btn btn-primary" 
-              onClick={handleDownloadQR} 
-              style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
-            >
-              <Download size={16} /> Download QR Code
-            </button>
+
 
             <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>Or pay directly using your favorite app:</p>
