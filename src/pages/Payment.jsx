@@ -105,6 +105,30 @@ export default function Payment() {
             >
               <Download size={16} /> Download QR Code
             </button>
+
+            <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>Or pay directly using your favorite app:</p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                <a href={`tez://upi/pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${totalDue}&cu=INR`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', overflow: 'hidden', padding: '4px' }}>
+                    <img src="/GooglePay.Logo.png" alt="Google Pay" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: '500' }}>GPay</span>
+                </a>
+                <a href={`phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${totalDue}&cu=INR`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', overflow: 'hidden', padding: '4px' }}>
+                    <img src="/phonepay.logo.png" alt="PhonePe" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: '500' }}>PhonePe</span>
+                </a>
+                <a href={`paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${totalDue}&cu=INR`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', overflow: 'hidden', padding: '4px' }}>
+                    <img src="/paytm.logo.png" alt="Paytm" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: '500' }}>Paytm</span>
+                </a>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="animate-fade-in">

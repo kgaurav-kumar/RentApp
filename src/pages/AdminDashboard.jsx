@@ -187,6 +187,22 @@ export default function AdminDashboard() {
     window.location.href = `mailto:${data.email || ''}?subject=${subject}&body=${body}`;
   };
 
+  const handlePaymentSuccessEmail = (data, totalDue, totalUnits) => {
+    const subject = encodeURIComponent("Payment Successful Confirmation");
+    const body = encodeURIComponent(
+      `Hello ${data.name || 'Tenant'},\n\n` +
+      `Your bill has been successfully paid. Here are the details of the payment received:\n\n` +
+      `Rent Amount: Rs ${data.rent || 0}\n` +
+      `Electricity Consumed: ${totalUnits} units\n` +
+      `Electricity Charges: Rs ${totalUnits * (data.rate || 8)}\n` +
+      `---------------------------------------\n` +
+      `Total Amount Paid: Rs ${totalDue}\n\n` +
+      `Thank you for your payment!\n\n` +
+      `Regards,\nAdmin`
+    );
+    window.location.href = `mailto:${data.email || ''}?subject=${subject}&body=${body}`;
+  };
+
   if (loading) {
     return (
       <div className="container flex-center" style={{ minHeight: '100vh' }}>
@@ -276,6 +292,9 @@ export default function AdminDashboard() {
                     </button>
                     <button className="btn" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '0.5rem 1rem' }} onClick={() => handleSendEmail(data, totalDue, totalUnits)}>
                       <Mail size={16} /> Send Bill
+                    </button>
+                    <button className="btn" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '0.5rem 1rem' }} onClick={() => handlePaymentSuccessEmail(data, totalDue, totalUnits)}>
+                      <Mail size={16} /> Send Receipt
                     </button>
                     {editingUser === id ? (
                       <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => handleSave(id)}>
