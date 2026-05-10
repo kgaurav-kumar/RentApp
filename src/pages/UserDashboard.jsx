@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Home, Zap, Bell, Calendar, Loader2, Camera } from 'lucide-react';
 import { auth, db } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../context/AuthContext';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -12,14 +13,22 @@ export default function UserDashboard() {
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [viewImage, setViewImage] = useState(null);
+  const [zoom, setZoom] = useState(1);
+
+  const handleCloseImage = () => {
+    setViewImage(null);
+    setZoom(1);
+  };
 
   useEffect(() => {
     if (!currentUser) return;
 
-    const unsub = onSnapshot(doc(db, "users", currentUser.uid), 
-      (docSnap) => {
-        if (docSnap.exists()) {
-          setData(docSnap.data());
+    const q = query(collection(db, "users"), where("email", "==", currentUser.email));
+    const unsub = onSnapshot(q, 
+      (snapshot) => {
+        if (!snapshot.empty) {
+          setData(snapshot.docs[0].data());
         } else {
           setData({ 
             name: currentUser.displayName || currentUser.email.split('@')[0], 
@@ -74,7 +83,8 @@ export default function UserDashboard() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem' }}>Hello, {name}</h1>
-          <p style={{ margin: 0 }}>Your Dashboard</p>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{currentUser?.email}</p>
+          <p style={{ margin: 0, marginTop: '0.25rem' }}>Your Dashboard</p>
         </div>
         <button className="btn" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} onClick={handleLogout}>
           <LogOut size={18} /> Logout
@@ -128,9 +138,9 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Previous: {m1_prev}</div>
                   {data?.m1_prev_photo ? (
-                    <a href={data.m1_prev_photo} target="_blank" rel="noopener noreferrer" className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none' }}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m1_prev_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Prev Photo
-                    </a>
+                    </button>
                   ) : (
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>No photo</div>
                   )}
@@ -138,9 +148,9 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Current: {m1_curr}</div>
                   {data?.m1_curr_photo ? (
-                    <a href={data.m1_curr_photo} target="_blank" rel="noopener noreferrer" className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none' }}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m1_curr_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Curr Photo
-                    </a>
+                    </button>
                   ) : (
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>No photo</div>
                   )}
@@ -158,9 +168,9 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Previous: {m2_prev}</div>
                   {data?.m2_prev_photo ? (
-                    <a href={data.m2_prev_photo} target="_blank" rel="noopener noreferrer" className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none' }}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m2_prev_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Prev Photo
-                    </a>
+                    </button>
                   ) : (
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>No photo</div>
                   )}
@@ -168,9 +178,9 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Current: {m2_curr}</div>
                   {data?.m2_curr_photo ? (
-                    <a href={data.m2_curr_photo} target="_blank" rel="noopener noreferrer" className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none' }}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m2_curr_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Curr Photo
-                    </a>
+                    </button>
                   ) : (
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>No photo</div>
                   )}
@@ -198,6 +208,29 @@ export default function UserDashboard() {
           </button>
         </div>
       </div>
+
+      {viewImage && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1 }}>
+            <button onClick={handleCloseImage} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2rem', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
+          </div>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true}>
+              <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+                <img 
+                  src={viewImage} 
+                  alt="Meter Reading" 
+                  style={{ 
+                    width: '100vw', 
+                    height: 'calc(100vh - 70px)', 
+                    objectFit: 'contain'
+                  }} 
+                />
+              </TransformComponent>
+            </TransformWrapper>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

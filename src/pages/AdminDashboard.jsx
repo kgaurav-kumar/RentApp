@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Camera, Edit2, Save, Loader2, Phone, Mail, CheckCircle, MessageSquare, FileText, Image as ImageIcon } from 'lucide-react';
+import { LogOut, User, Camera, Edit2, Save, Loader2, Phone, Mail, CheckCircle, MessageSquare, FileText, Image as ImageIcon, Globe } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import emailjs from '@emailjs/browser';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -15,6 +16,14 @@ export default function AdminDashboard() {
   const [editForm, setEditForm] = useState({ rent: 0, rate: 8, m1_prev: 0, m1_curr: 0, m2_prev: 0, m2_curr: 0 });
   const [uploading, setUploading] = useState(null); // { id: userId, type: 'm1_prev'|'m1_curr'|'m2_prev'|'m2_curr' }
   const [sendingEmail, setSendingEmail] = useState(null); // userId of who is receiving an email
+
+  const [viewImage, setViewImage] = useState(null);
+  const [zoom, setZoom] = useState(1);
+
+  const handleCloseImage = () => {
+    setViewImage(null);
+    setZoom(1);
+  };
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), 
@@ -218,11 +227,13 @@ export default function AdminDashboard() {
     try {
       await emailjs.send(
         'service_cfom9wy',
-        'template_vahig6e',
+        'template_g7i421t',
         {
           subject: subject,
           message: bodyText,
-          to_email: data.email
+          to_email: data.email,
+          name: data.name || 'Tenant',
+          email: data.email
         },
         { publicKey: 'Ye7izIOMQOgUCG9Pw' }
       );
@@ -257,11 +268,13 @@ export default function AdminDashboard() {
     try {
       await emailjs.send(
         'service_cfom9wy',
-        'template_vahig6e',
+        'template_g7i421t',
         {
           subject: subject,
           message: bodyText,
-          to_email: data.email
+          to_email: data.email,
+          name: data.name || 'Tenant',
+          email: data.email
         },
         { publicKey: 'Ye7izIOMQOgUCG9Pw' }
       );
@@ -338,9 +351,9 @@ export default function AdminDashboard() {
         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{label} Photo</div>
         {photoUrl ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <a href={photoUrl} target="_blank" rel="noopener noreferrer" className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)', justifyContent: 'center' }}>
+            <button className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)', justifyContent: 'center' }} onClick={() => setViewImage(photoUrl)}>
               <Camera size={12} style={{ marginRight: '0.25rem' }} /> See Photo
-            </a>
+            </button>
             <label className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', border: '1px dashed var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-secondary)', cursor: isUploading ? 'not-allowed' : 'pointer', justifyContent: 'center' }}>
               {isUploading ? <Loader2 size={12} className="animate-spin" style={{ marginRight: '0.25rem' }} /> : <Edit2 size={12} style={{ marginRight: '0.25rem' }} />}
               {isUploading ? 'Uploading...' : 'Change'}
@@ -365,9 +378,22 @@ export default function AdminDashboard() {
           <h1 style={{ fontSize: '1.5rem' }}>Admin Dashboard</h1>
           <p style={{ margin: 0 }}>Manage Tenants, Rent & Meters</p>
         </div>
-        <button className="btn" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} onClick={handleLogout}>
-          <LogOut size={18} /> Logout
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button className="btn" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }} onClick={() => {
+            // This intent forces Android to open the link in an external browser (like Chrome)
+            window.location.href = "intent://rent-eosin.vercel.app/#Intent;scheme=https;action=android.intent.action.VIEW;end;";
+            
+            // Fallback just in case intent fails after a tiny delay
+            setTimeout(() => {
+              window.open("https://rent-eosin.vercel.app/", "_blank");
+            }, 500);
+          }}>
+            <Globe size={18} /> Open Web
+          </button>
+          <button className="btn" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} onClick={handleLogout}>
+            <LogOut size={18} /> Logout
+          </button>
+        </div>
       </header>
 
       {userEntries.length === 0 ? (
@@ -398,6 +424,9 @@ export default function AdminDashboard() {
                       <h2 style={{ fontSize: '1.25rem', margin: 0 }}>{data.name || 'Tenant'}</h2>
                       <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <Phone size={12} /> {data.phone || 'N/A'}
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                        <Mail size={12} /> {data.email || 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -525,7 +554,28 @@ export default function AdminDashboard() {
           })}
         </div>
       )}
-
+      {viewImage && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1 }}>
+            <button onClick={handleCloseImage} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2rem', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
+          </div>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true}>
+              <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+                <img 
+                  src={viewImage} 
+                  alt="Meter Reading" 
+                  style={{ 
+                    width: '100vw', 
+                    height: 'calc(100vh - 70px)', 
+                    objectFit: 'contain'
+                  }} 
+                />
+              </TransformComponent>
+            </TransformWrapper>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
