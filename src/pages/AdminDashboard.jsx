@@ -224,12 +224,12 @@ export default function AdminDashboard() {
           message: bodyText,
           to_email: data.email
         },
-        'Ye7izIOMQOgUCG9Pw'
+        { publicKey: 'Ye7izIOMQOgUCG9Pw' }
       );
       alert("Bill sent successfully to " + data.email);
     } catch (error) {
       console.error("EmailJS Error:", error);
-      alert("Failed to send email. Please try again.");
+      alert("Failed to send email. Error: " + (error.text || error.message || "Unknown error"));
     } finally {
       setSendingEmail(null);
     }
@@ -263,12 +263,12 @@ export default function AdminDashboard() {
           message: bodyText,
           to_email: data.email
         },
-        'Ye7izIOMQOgUCG9Pw'
+        { publicKey: 'Ye7izIOMQOgUCG9Pw' }
       );
       alert("Receipt sent successfully to " + data.email);
     } catch (error) {
       console.error("EmailJS Error:", error);
-      alert("Failed to send email. Please try again.");
+      alert("Failed to send email. Error: " + (error.text || error.message || "Unknown error"));
     } finally {
       setSendingEmail(null);
     }
