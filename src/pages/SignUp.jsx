@@ -25,6 +25,12 @@ export default function SignUp() {
     setLoading(true);
     setError('');
 
+    if (!window.navigator.onLine) {
+      setError('Sign Up failed. Please check your internet connection.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
@@ -47,7 +53,11 @@ export default function SignUp() {
       navigate('/user');
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Failed to create an account.');
+      if (err.code === 'auth/network-request-failed') {
+        setError('Sign Up failed. Please check your internet connection.');
+      } else {
+        setError(err.message || 'Failed to create an account.');
+      }
     } finally {
       setLoading(false);
     }

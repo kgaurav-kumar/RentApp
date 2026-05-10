@@ -16,13 +16,23 @@ export default function Login() {
     setLoading(true);
     setError('');
 
+    if (!window.navigator.onLine) {
+      setError('Login failed. Please check your internet connection.');
+      setLoading(false);
+      return;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       // The AuthContext and App.jsx routing will automatically redirect the user
       // so we don't strictly need to navigate here, but we can do a fallback or just wait.
     } catch (err) {
       console.error(err);
-      setError('Invalid email or password.');
+      if (err.code === 'auth/network-request-failed') {
+        setError('Login failed. Please check your internet connection.');
+      } else {
+        setError('Invalid email or password.');
+      }
       setLoading(false);
     }
   };

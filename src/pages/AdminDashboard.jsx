@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Camera, Edit2, Save, Loader2, Phone, Mail, CheckCircle } from 'lucide-react';
+import { LogOut, User, Camera, Edit2, Save, Loader2, Phone, Mail, CheckCircle, MessageSquare, FileText, Image as ImageIcon } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ rent: 0, rate: 8, m1_prev: 0, m1_curr: 0, m2_prev: 0, m2_curr: 0 });
   const [uploading, setUploading] = useState(null); // { id: userId, type: 'm1_prev'|'m1_curr'|'m2_prev'|'m2_curr' }
+  const [photoPopup, setPhotoPopup] = useState(null); // { id: userId, type: meterType }
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), 
@@ -154,8 +155,31 @@ export default function AdminDashboard() {
     }
 
     try {
+      const m1_units = Math.max(0, (data.m1_curr || 0) - (data.m1_prev || 0));
+      const m2_units = Math.max(0, (data.m2_curr || 0) - (data.m2_prev || 0));
+      const totalUnits = m1_units + m2_units;
+      const totalDue = (data.rent || 0) + (totalUnits * (data.rate || 8));
+
+      const historyEntry = {
+        id: Date.now().toString(),
+        date: new Date().toISOString(),
+        rent: data.rent || 0,
+        rate: data.rate || 8,
+        m1_prev: data.m1_prev || 0,
+        m1_curr: data.m1_curr || 0,
+        m2_prev: data.m2_prev || 0,
+        m2_curr: data.m2_curr || 0,
+        m1_units,
+        m2_units,
+        totalUnits,
+        totalDue
+      };
+
+      const updatedHistory = [historyEntry, ...(data.history || [])];
+
       await setDoc(doc(db, "users", userId), {
         ...data,
+        history: updatedHistory,
         rent: 0,
         m1_prev: data.m1_curr || data.m1_prev || 0,
         m2_prev: data.m2_curr || data.m2_prev || 0,
@@ -173,34 +197,94 @@ export default function AdminDashboard() {
 
   const handleSendEmail = (data, totalDue, totalUnits) => {
     const subject = encodeURIComponent("Month-end Rent & Electricity Bill");
-    const body = encodeURIComponent(
-      `Hello ${data.name || 'Tenant'},\n\n` +
-      `Here are your bill details for this month:\n\n` +
-      `Rent Amount: Rs ${data.rent || 0}\n` +
-      `Electricity Consumed: ${totalUnits} units\n` +
-      `Electricity Charges: Rs ${totalUnits * (data.rate || 8)}\n` +
-      `---------------------------------------\n` +
-      `Total Amount Due: Rs ${totalDue}\n\n` +
-      `Please pay the total amount as soon as possible.\n\n` +
-      `Regards,\nAdmin`
-    );
-    window.location.href = `mailto:${data.email || ''}?subject=${subject}&body=${body}`;
+    const bodyText = 
+      `Hello ${data.name || 'Tenant'},\r\n\r\n` +
+      `Here are your bill details for this month:\r\n\r\n` +
+      `Rent Amount: Rs ${data.rent || 0}\r\n` +
+      `Electricity Consumed: ${totalUnits} units\r\n` +
+      `Electricity Charges: Rs ${totalUnits * (data.rate || 8)}\r\n` +
+      `---------------------------------------\r\n` +
+      `Total Amount Due: Rs ${totalDue}\r\n\r\n` +
+      `Please pay the total amount as soon as possible.\r\n\r\n` +
+      `Regards,\r\nAdmin`;
+      
+    const body = encodeURIComponent(bodyText);
+    const mailtoLink = `mailto:${data.email || ''}?subject=${subject}&body=${body}`;
+    
+    const link = document.createElement('a');
+    link.href = mailtoLink;
+    link.target = "_top";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handlePaymentSuccessEmail = (data, totalDue, totalUnits) => {
     const subject = encodeURIComponent("Payment Successful Confirmation");
-    const body = encodeURIComponent(
-      `Hello ${data.name || 'Tenant'},\n\n` +
-      `Your bill has been successfully paid. Here are the details of the payment received:\n\n` +
-      `Rent Amount: Rs ${data.rent || 0}\n` +
-      `Electricity Consumed: ${totalUnits} units\n` +
-      `Electricity Charges: Rs ${totalUnits * (data.rate || 8)}\n` +
-      `---------------------------------------\n` +
-      `Total Amount Paid: Rs ${totalDue}\n\n` +
-      `Thank you for your payment!\n\n` +
-      `Regards,\nAdmin`
-    );
-    window.location.href = `mailto:${data.email || ''}?subject=${subject}&body=${body}`;
+    const bodyText = 
+      `Hello ${data.name || 'Tenant'},\r\n\r\n` +
+      `Your bill has been successfully paid. Here are the details of the payment received:\r\n\r\n` +
+      `Rent Amount: Rs ${data.rent || 0}\r\n` +
+      `Electricity Consumed: ${totalUnits} units\r\n` +
+      `Electricity Charges: Rs ${totalUnits * (data.rate || 8)}\r\n` +
+      `---------------------------------------\r\n` +
+      `Total Amount Paid: Rs ${totalDue}\r\n\r\n` +
+      `Thank you for your payment!\r\n\r\n` +
+      `Regards,\r\nAdmin`;
+      
+    const body = encodeURIComponent(bodyText);
+    const mailtoLink = `mailto:${data.email || ''}?subject=${subject}&body=${body}`;
+    
+    const link = document.createElement('a');
+    link.href = mailtoLink;
+    link.target = "_top";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleSendSMS = (data, totalDue, totalUnits) => {
+    const bodyText = 
+      `Hello ${data.name || 'Tenant'},\r\n\r\n` +
+      `Bill Details:\r\n` +
+      `Rent: Rs ${data.rent || 0}\r\n` +
+      `Elec Consumed: ${totalUnits} units\r\n` +
+      `Elec Charges: Rs ${totalUnits * (data.rate || 8)}\r\n` +
+      `------------------------\r\n` +
+      `Total Due: Rs ${totalDue}\r\n\r\n` +
+      `Please pay ASAP.\r\nAdmin`;
+      
+    const body = encodeURIComponent(bodyText);
+    const smsLink = `sms:${data.phone || ''}?body=${body}`;
+    
+    const link = document.createElement('a');
+    link.href = smsLink;
+    link.target = "_top";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePaymentSuccessSMS = (data, totalDue, totalUnits) => {
+    const bodyText = 
+      `Hello ${data.name || 'Tenant'},\r\n\r\n` +
+      `Payment Received!\r\n` +
+      `Rent: Rs ${data.rent || 0}\r\n` +
+      `Elec Consumed: ${totalUnits} units\r\n` +
+      `Elec Charges: Rs ${totalUnits * (data.rate || 8)}\r\n` +
+      `------------------------\r\n` +
+      `Total Paid: Rs ${totalDue}\r\n\r\n` +
+      `Thank you!\r\nAdmin`;
+      
+    const body = encodeURIComponent(bodyText);
+    const smsLink = `sms:${data.phone || ''}?body=${body}`;
+    
+    const link = document.createElement('a');
+    link.href = smsLink;
+    link.target = "_top";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -226,18 +310,20 @@ export default function AdminDashboard() {
             <a href={photoUrl} target="_blank" rel="noopener noreferrer" className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)', justifyContent: 'center' }}>
               <Camera size={12} style={{ marginRight: '0.25rem' }} /> See Photo
             </a>
-            <label className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', border: '1px dashed var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-secondary)', cursor: isUploading ? 'not-allowed' : 'pointer', justifyContent: 'center' }}>
+            <button className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', border: '1px dashed var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-secondary)', cursor: isUploading ? 'not-allowed' : 'pointer', justifyContent: 'center' }} onClick={() => !isUploading && setPhotoPopup({ id, meterType })} disabled={isUploading}>
               {isUploading ? <Loader2 size={12} className="animate-spin" style={{ marginRight: '0.25rem' }} /> : <Edit2 size={12} style={{ marginRight: '0.25rem' }} />}
               {isUploading ? 'Uploading...' : 'Change'}
-              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, id, meterType)} disabled={isUploading} />
-            </label>
+            </button>
+            {isUploading && <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Uploading...</div>}
           </div>
         ) : (
-          <label className="btn" style={{ width: '100%', height: '60px', border: '1px dashed var(--border-color)', backgroundColor: 'transparent', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: 'var(--text-secondary)', cursor: isUploading ? 'not-allowed' : 'pointer' }}>
-            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-            <span style={{ fontSize: '0.65rem', marginTop: '0.25rem' }}>{isUploading ? 'Uploading...' : 'Upload'}</span>
-            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, id, meterType)} disabled={isUploading} />
-          </label>
+          <div>
+            <button className="btn" style={{ width: '100%', height: '60px', border: '1px dashed var(--border-color)', backgroundColor: 'transparent', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: 'var(--text-secondary)', cursor: isUploading ? 'not-allowed' : 'pointer' }} onClick={() => !isUploading && setPhotoPopup({ id, meterType })} disabled={isUploading}>
+              {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+              <span style={{ fontSize: '0.65rem', marginTop: '0.25rem' }}>{isUploading ? 'Uploading...' : 'Upload'}</span>
+            </button>
+            {isUploading && <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '0.25rem' }}>Uploading...</div>}
+          </div>
         )}
       </div>
     );
@@ -291,10 +377,16 @@ export default function AdminDashboard() {
                       <CheckCircle size={16} /> Payment Received
                     </button>
                     <button className="btn" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '0.5rem 1rem' }} onClick={() => handleSendEmail(data, totalDue, totalUnits)}>
-                      <Mail size={16} /> Send Bill
+                      <Mail size={16} /> Email Bill
+                    </button>
+                    <button className="btn" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '0.5rem 1rem' }} onClick={() => handleSendSMS(data, totalDue, totalUnits)}>
+                      <MessageSquare size={16} /> SMS Bill
                     </button>
                     <button className="btn" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '0.5rem 1rem' }} onClick={() => handlePaymentSuccessEmail(data, totalDue, totalUnits)}>
-                      <Mail size={16} /> Send Receipt
+                      <Mail size={16} /> Email Receipt
+                    </button>
+                    <button className="btn" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '0.5rem 1rem' }} onClick={() => handlePaymentSuccessSMS(data, totalDue, totalUnits)}>
+                      <MessageSquare size={16} /> SMS Receipt
                     </button>
                     {editingUser === id ? (
                       <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => handleSave(id)}>
@@ -305,6 +397,9 @@ export default function AdminDashboard() {
                         <Edit2 size={16} /> Edit
                       </button>
                     )}
+                    <button className="btn" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '0.5rem 1rem' }} onClick={() => navigate(`/admin/history/${id}`)}>
+                      <FileText size={16} /> History
+                    </button>
                   </div>
                 </div>
 
@@ -397,6 +492,29 @@ export default function AdminDashboard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {photoPopup && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={() => setPhotoPopup(null)}>
+          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '350px', backgroundColor: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 0.5rem 0', textAlign: 'center', fontSize: '1.25rem' }}>Upload Photo</h3>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <label className="btn btn-primary" style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', height: '100px', justifyContent: 'center' }}>
+                <Camera size={32} />
+                <span style={{ fontWeight: '500' }}>Camera</span>
+                <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => { handlePhotoUpload(e, photoPopup.id, photoPopup.type); setPhotoPopup(null); }} />
+              </label>
+              <label className="btn" style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', cursor: 'pointer', height: '100px', justifyContent: 'center' }}>
+                <ImageIcon size={32} />
+                <span style={{ fontWeight: '500' }}>Gallery</span>
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { handlePhotoUpload(e, photoPopup.id, photoPopup.type); setPhotoPopup(null); }} />
+              </label>
+            </div>
+            <button className="btn" style={{ width: '100%', marginTop: '0.5rem', backgroundColor: 'transparent', color: 'var(--text-secondary)' }} onClick={() => setPhotoPopup(null)}>
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>

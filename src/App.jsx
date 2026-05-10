@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import UserHistory from './pages/UserHistory';
 import Payment from './pages/Payment';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -64,6 +65,12 @@ function App() {
           <Route path="/admin" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/history/:userId" element={
+            <ProtectedRoute requireAdmin={true}>
+              <UserHistory />
             </ProtectedRoute>
           } />
           
