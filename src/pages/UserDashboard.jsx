@@ -16,9 +16,28 @@ export default function UserDashboard() {
   const [viewImage, setViewImage] = useState(null);
   const [zoom, setZoom] = useState(1);
 
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (viewImage) {
+        setViewImage(null);
+        setZoom(1);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [viewImage]);
+
+  const handleOpenImage = (url) => {
+    setViewImage(url);
+    window.history.pushState({ imageModal: true }, '');
+  };
+
   const handleCloseImage = () => {
     setViewImage(null);
     setZoom(1);
+    if (window.history.state && window.history.state.imageModal) {
+      window.history.back();
+    }
   };
 
   useEffect(() => {
@@ -77,6 +96,9 @@ export default function UserDashboard() {
 
   const totalLightUnits = m1_units + m2_units;
   const totalLightBill = totalLightUnits * lightRate;
+  
+  const totalDue = rent + totalLightBill;
+  const showReminder = isMonthEnd && totalDue > 0;
 
   return (
     <div className="container animate-fade-in">
@@ -91,7 +113,7 @@ export default function UserDashboard() {
         </button>
       </header>
 
-      {isMonthEnd && (
+      {showReminder && (
         <div className="glass-card" style={{ marginBottom: '2rem', borderLeft: '4px solid var(--accent-primary)', backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
             <Bell color="var(--accent-primary)" style={{ marginTop: '0.25rem' }} />
@@ -138,7 +160,7 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Previous: {m1_prev}</div>
                   {data?.m1_prev_photo ? (
-                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m1_prev_photo)}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => handleOpenImage(data.m1_prev_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Prev Photo
                     </button>
                   ) : (
@@ -148,7 +170,7 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Current: {m1_curr}</div>
                   {data?.m1_curr_photo ? (
-                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m1_curr_photo)}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => handleOpenImage(data.m1_curr_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Curr Photo
                     </button>
                   ) : (
@@ -168,7 +190,7 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Previous: {m2_prev}</div>
                   {data?.m2_prev_photo ? (
-                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m2_prev_photo)}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => handleOpenImage(data.m2_prev_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Prev Photo
                     </button>
                   ) : (
@@ -178,7 +200,7 @@ export default function UserDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Current: {m2_curr}</div>
                   {data?.m2_curr_photo ? (
-                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(data.m2_curr_photo)}>
+                    <button className="btn" style={{ width: '100%', padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => handleOpenImage(data.m2_curr_photo)}>
                       <Camera size={12} style={{ marginRight: '0.25rem' }} /> Curr Photo
                     </button>
                   ) : (
@@ -216,13 +238,16 @@ export default function UserDashboard() {
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true}>
-              <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+              <TransformComponent 
+                wrapperStyle={{ width: '100%', height: '100%' }} 
+                contentStyle={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              >
                 <img 
                   src={viewImage} 
                   alt="Meter Reading" 
                   style={{ 
-                    width: '100vw', 
-                    height: 'calc(100vh - 70px)', 
+                    maxWidth: '100vw', 
+                    maxHeight: 'calc(100vh - 70px)', 
                     objectFit: 'contain'
                   }} 
                 />

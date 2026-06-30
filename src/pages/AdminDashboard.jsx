@@ -20,9 +20,28 @@ export default function AdminDashboard() {
   const [viewImage, setViewImage] = useState(null);
   const [zoom, setZoom] = useState(1);
 
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (viewImage) {
+        setViewImage(null);
+        setZoom(1);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [viewImage]);
+
+  const handleOpenImage = (url) => {
+    setViewImage(url);
+    window.history.pushState({ imageModal: true }, '');
+  };
+
   const handleCloseImage = () => {
     setViewImage(null);
     setZoom(1);
+    if (window.history.state && window.history.state.imageModal) {
+      window.history.back();
+    }
   };
 
   useEffect(() => {
@@ -351,7 +370,7 @@ export default function AdminDashboard() {
         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{label} Photo</div>
         {photoUrl ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <button className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)', justifyContent: 'center' }} onClick={() => setViewImage(photoUrl)}>
+            <button className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)', justifyContent: 'center' }} onClick={() => handleOpenImage(photoUrl)}>
               <Camera size={12} style={{ marginRight: '0.25rem' }} /> See Photo
             </button>
             <label className="btn" style={{ padding: '0.4rem', fontSize: '0.75rem', border: '1px dashed var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-secondary)', cursor: isUploading ? 'not-allowed' : 'pointer', justifyContent: 'center' }}>
@@ -561,13 +580,16 @@ export default function AdminDashboard() {
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true}>
-              <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+              <TransformComponent 
+                wrapperStyle={{ width: '100%', height: '100%' }} 
+                contentStyle={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              >
                 <img 
                   src={viewImage} 
                   alt="Meter Reading" 
                   style={{ 
-                    width: '100vw', 
-                    height: 'calc(100vh - 70px)', 
+                    maxWidth: '100vw', 
+                    maxHeight: 'calc(100vh - 70px)', 
                     objectFit: 'contain'
                   }} 
                 />
