@@ -5,7 +5,7 @@ import { auth, db } from '../firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import emailjs from '@emailjs/browser';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -574,33 +574,28 @@ export default function AdminDashboard() {
         </div>
       )}
       {viewImage && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1 }}>
-            <button onClick={handleCloseImage} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2rem', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 2 }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => setZoom(z => Math.max(0.5, z - 0.25))} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.25rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+              <button onClick={() => setZoom(1)} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '0 0.75rem', height: '36px', borderRadius: '1rem', fontSize: '0.8rem', cursor: 'pointer' }}>{Math.round(zoom * 100)}%</button>
+              <button onClick={() => setZoom(z => Math.min(5, z + 0.25))} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.25rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+            </div>
+            <button onClick={handleCloseImage} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1.25rem', borderRadius: '2rem', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>✕ Close</button>
           </div>
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <TransformWrapper initialScale={1} minScale={0.5} maxScale={5}>
-              <TransformComponent 
-                wrapperStyle={{ 
-                  width: '100vw', 
-                  height: 'calc(100vh - 70px)', 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center' 
-                }}
-              >
-                <img 
-                  src={viewImage} 
-                  alt="Meter Reading" 
-                  style={{ 
-                    maxWidth: '95vw', 
-                    maxHeight: 'calc(100vh - 100px)',
-                    objectFit: 'contain',
-                    display: 'block'
-                  }} 
-                />
-              </TransformComponent>
-            </TransformWrapper>
+          <div style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitOverflowScrolling: 'touch' }}>
+            <img 
+              src={viewImage} 
+              alt="Meter Reading" 
+              style={{ 
+                maxWidth: zoom <= 1 ? '95vw' : 'none', 
+                maxHeight: zoom <= 1 ? 'calc(100vh - 80px)' : 'none',
+                width: zoom > 1 ? `${95 * zoom}vw` : 'auto',
+                objectFit: 'contain',
+                display: 'block',
+                transform: zoom < 1 ? `scale(${zoom})` : 'none'
+              }} 
+            />
           </div>
         </div>
       )}
