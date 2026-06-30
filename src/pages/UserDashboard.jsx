@@ -238,18 +238,25 @@ export default function UserDashboard() {
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true} centerZoomedOut={true}>
-              <TransformComponent wrapperStyle={{ width: '100vw', height: 'calc(100vh - 70px)' }}>
-                <img 
-                  src={viewImage} 
-                  alt="Meter Reading" 
-                  style={{ 
-                    maxWidth: '100vw', 
-                    maxHeight: 'calc(100vh - 70px)',
-                    width: 'auto',
-                    height: 'auto'
-                  }} 
-                />
-              </TransformComponent>
+              {({ centerView, resetTransform }) => (
+                <TransformComponent wrapperStyle={{ width: '100vw', height: 'calc(100vh - 70px)' }}>
+                  <img 
+                    src={viewImage} 
+                    alt="Meter Reading" 
+                    onLoad={() => {
+                      if (centerView) centerView();
+                      else if (resetTransform) resetTransform();
+                    }}
+                    style={{ 
+                      maxWidth: '100vw', 
+                      maxHeight: 'calc(100vh - 70px)',
+                      width: 'auto',
+                      height: 'auto',
+                      display: 'block'
+                    }} 
+                  />
+                </TransformComponent>
+              )}
             </TransformWrapper>
           </div>
         </div>
