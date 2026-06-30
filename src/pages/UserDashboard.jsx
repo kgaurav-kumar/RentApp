@@ -237,18 +237,16 @@ export default function UserDashboard() {
             <button onClick={handleCloseImage} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2rem', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
-            <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true}>
-              <TransformComponent 
-                wrapperStyle={{ width: '100%', height: '100%' }} 
-                contentStyle={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-              >
+            <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true} centerZoomedOut={true}>
+              <TransformComponent wrapperStyle={{ width: '100vw', height: 'calc(100vh - 70px)' }}>
                 <img 
                   src={viewImage} 
                   alt="Meter Reading" 
                   style={{ 
                     maxWidth: '100vw', 
-                    maxHeight: 'calc(100vh - 70px)', 
-                    objectFit: 'contain'
+                    maxHeight: 'calc(100vh - 70px)',
+                    width: 'auto',
+                    height: 'auto'
                   }} 
                 />
               </TransformComponent>
