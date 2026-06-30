@@ -236,27 +236,19 @@ export default function UserDashboard() {
           <div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1 }}>
             <button onClick={handleCloseImage} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '2rem', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
           </div>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <TransformWrapper initialScale={1} minScale={0.5} maxScale={5} centerOnInit={true} centerZoomedOut={true}>
-              {({ centerView, resetTransform }) => (
-                <TransformComponent wrapperStyle={{ width: '100vw', height: 'calc(100vh - 70px)' }}>
-                  <img 
-                    src={viewImage} 
-                    alt="Meter Reading" 
-                    onLoad={() => {
-                      if (centerView) centerView();
-                      else if (resetTransform) resetTransform();
-                    }}
-                    style={{ 
-                      maxWidth: '100vw', 
-                      maxHeight: 'calc(100vh - 70px)',
-                      width: 'auto',
-                      height: 'auto',
-                      display: 'block'
-                    }} 
-                  />
-                </TransformComponent>
-              )}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <TransformWrapper initialScale={1} minScale={0.5} maxScale={5}>
+              <TransformComponent>
+                <img 
+                  src={viewImage} 
+                  alt="Meter Reading" 
+                  style={{ 
+                    maxWidth: '100vw', 
+                    maxHeight: 'calc(100vh - 70px)',
+                    display: 'block'
+                  }} 
+                />
+              </TransformComponent>
             </TransformWrapper>
           </div>
         </div>
