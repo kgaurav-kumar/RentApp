@@ -121,6 +121,9 @@ export default function UserHistory() {
 
       const result = await response.json();
       if (result.success && result.data?.image?.url) {
+        // Show instruction before opening Chrome
+        alert("Your receipt will open in Chrome.\n\n👉 Long-press on the image for 2-3 seconds\n👉 Tap 'Download image' or 'Save image'\n\nThe receipt will be saved to your gallery!");
+        
         // Open the DIRECT image file URL in Chrome via Intent
         const directUrl = result.data.image.url;
         const rawUrl = directUrl.replace(/^https?:\/\//, '');
