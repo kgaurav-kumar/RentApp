@@ -17,7 +17,7 @@ export default function Login() {
     setError('');
 
     if (!window.navigator.onLine) {
-      setError('Login failed. Please check your internet connection.');
+      setError('Login failed!. Please check your internet connection.');
       setLoading(false);
       return;
     }

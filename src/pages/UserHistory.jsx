@@ -1,19 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Calendar, Bolt, IndianRupee, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Calendar, Bolt, IndianRupee, Trash2, Download } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
+import { jsPDF } from 'jspdf';
 
 export default function UserHistory() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { currentUser, adminEmail } = useAuth();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const activeUserId = userId || currentUser?.uid;
+  const isAdmin = currentUser?.email === adminEmail;
+
   useEffect(() => {
+    if (!activeUserId) return;
     const fetchHistory = async () => {
       try {
-        const docRef = doc(db, "users", userId);
+        const docRef = doc(db, "users", activeUserId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setUserData(docSnap.data());
@@ -27,7 +34,7 @@ export default function UserHistory() {
       }
     };
     fetchHistory();
-  }, [userId]);
+  }, [activeUserId]);
 
   if (loading) {
     return (
@@ -57,12 +64,155 @@ export default function UserHistory() {
 
     try {
       const updatedHistory = history.filter(record => record.id !== recordId);
-      await setDoc(doc(db, "users", userId), { history: updatedHistory }, { merge: true });
+      await setDoc(doc(db, "users", activeUserId), { history: updatedHistory }, { merge: true });
       setUserData(prev => ({ ...prev, history: updatedHistory }));
     } catch (error) {
       console.error("Error deleting history:", error);
       alert("Failed to delete history record.");
     }
+  };
+
+  const downloadPDF = (record) => {
+    const doc = new jsPDF();
+    const dateObj = new Date(record.date);
+    const dateStr = dateObj.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const timeStr = dateObj.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Header Colors & Styling
+    doc.setFillColor(15, 23, 42); // --bg-primary Dark Slate
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    // Header Text
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("RENTAPP", 20, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(200, 200, 200);
+    doc.text("EASY RENT & UTILITY RECEIPTS", 20, 32);
+    
+    // Receipt Details (Top Right)
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text("PAYMENT RECEIPT", 140, 20);
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Receipt ID: ${record.id}`, 140, 27);
+    doc.text(`Date: ${dateStr}`, 140, 33);
+
+    // Reset text color for body
+    doc.setTextColor(30, 41, 59); // Dark grey
+
+    // Tenant info section
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("TENANT INFORMATION", 20, 55);
+    
+    doc.setDrawColor(226, 232, 240); // border line color
+    doc.setLineWidth(0.5);
+    doc.line(20, 58, 190, 58);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Name: ${userData.name || 'N/A'}`, 20, 66);
+    doc.text(`Phone: ${userData.phone || 'N/A'}`, 20, 72);
+    doc.text(`Email: ${userData.email || 'N/A'}`, 20, 78);
+    doc.text(`Payment Time: ${dateStr} at ${timeStr}`, 20, 84);
+
+    // Receipt Table Section
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("BILL BREAKDOWN", 20, 100);
+    doc.line(20, 103, 190, 103);
+
+    // Table Header
+    doc.setFillColor(241, 245, 249);
+    doc.rect(20, 107, 170, 8, 'F');
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIPTION", 25, 112.5);
+    doc.text("DETAILS / READINGS", 75, 112.5);
+    doc.text("AMOUNT", 160, 112.5);
+
+    // Table Rows
+    let yPos = 122;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    
+    // Row 1: Rent
+    doc.text("Monthly House Rent", 25, yPos);
+    doc.text("Base rent for the month", 75, yPos);
+    doc.text(`Rs ${record.rent}`, 160, yPos);
+    
+    yPos += 10;
+    doc.line(20, yPos - 6, 190, yPos - 6);
+
+    // Row 2: Electricity
+    doc.text("Electricity Charges", 25, yPos);
+    doc.text(`${record.totalUnits} Units @ Rs ${record.rate}/unit`, 75, yPos);
+    doc.text(`Rs ${record.totalUnits * record.rate}`, 160, yPos);
+
+    // Readings breakdown
+    yPos += 5;
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Meter 1: ${record.m1_units} units (${record.m1_prev} to ${record.m1_curr})`, 75, yPos);
+    yPos += 4;
+    doc.text(`Meter 2: ${record.m2_units} units (${record.m2_prev} to ${record.m2_curr})`, 75, yPos);
+    
+    yPos += 6;
+    doc.line(20, yPos - 3, 190, yPos - 3);
+
+    // Reset color
+    doc.setTextColor(30, 41, 59);
+
+    // Total Amount Section
+    yPos += 5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("GRAND TOTAL PAID", 75, yPos);
+    doc.setFontSize(13);
+    doc.setTextColor(16, 185, 129); // Green total
+    doc.text(`Rs ${record.totalDue}`, 160, yPos);
+
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(1.5);
+    doc.line(20, yPos + 4, 190, yPos + 4);
+
+    // Paid Stamp
+    yPos += 20;
+    doc.setFillColor(209, 250, 229); // light green
+    doc.rect(20, yPos, 45, 12, 'F');
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(1);
+    doc.rect(20, yPos, 45, 12, 'S');
+    doc.setTextColor(5, 150, 105); // forest green
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("STATUS: PAID", 26, yPos + 8.5);
+
+    // Footer
+    doc.setTextColor(148, 163, 184);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text("This is a computer generated receipt and does not require a physical signature.", 20, 260);
+    doc.text("If you have any questions, please contact the landlord/administrator.", 20, 265);
+    
+    // Save PDF
+    const filename = `${userData.name?.replace(/\s+/g, '_') || 'Tenant'}_Rent_Receipt_${dateObj.toLocaleString('default', { month: 'short' })}${dateObj.getFullYear()}.pdf`;
+    doc.save(filename);
   };
 
   return (
@@ -99,13 +249,18 @@ export default function UserHistory() {
                     <Calendar size={16} />
                     <span style={{ fontWeight: '500' }}>{dateStr}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--success)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--success)', marginRight: '0.5rem' }}>
                       ₹{record.totalDue}
                     </div>
-                    <button className="btn" onClick={() => handleDeleteHistory(record.id)} style={{ padding: '0.4rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} title="Delete Record">
-                      <Trash2 size={16} />
+                    <button className="btn" onClick={() => downloadPDF(record)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }} title="Download PDF Receipt">
+                      <Download size={14} /> Download PDF
                     </button>
+                    {isAdmin && (
+                      <button className="btn" onClick={() => handleDeleteHistory(record.id)} style={{ padding: '0.4rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} title="Delete Record">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
 

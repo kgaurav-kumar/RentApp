@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Home, Zap, Bell, Calendar, Loader2, Camera } from 'lucide-react';
+import { LogOut, Home, Zap, Bell, Calendar, Loader2, Camera, FileText } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -102,15 +102,20 @@ export default function UserDashboard() {
 
   return (
     <div className="container animate-fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem' }}>Hello, {name}</h1>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{currentUser?.email}</p>
           <p style={{ margin: 0, marginTop: '0.25rem' }}>Your Dashboard</p>
         </div>
-        <button className="btn" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} onClick={handleLogout}>
-          <LogOut size={18} /> Logout
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }} onClick={() => navigate('/history')}>
+            <FileText size={18} /> View History
+          </button>
+          <button className="btn" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} onClick={handleLogout}>
+            <LogOut size={18} /> Logout
+          </button>
+        </div>
       </header>
 
       {showReminder && (

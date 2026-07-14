@@ -73,6 +73,12 @@ function App() {
               <UserHistory />
             </ProtectedRoute>
           } />
+
+          <Route path="/history" element={
+            <ProtectedRoute requireAdmin={false}>
+              <UserHistory />
+            </ProtectedRoute>
+          } />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
