@@ -104,8 +104,27 @@ export default function UserHistory() {
         return;
       }
 
-      // Mobile: show image in fullscreen modal → user long-presses to save to gallery
-      setPreviewImage(imageURL);
+      // Mobile: upload to ImgBB first, then show modal with HTTPS URL
+      // (Long-press only works on https:// image src, not data: URLs in WebView)
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      if (!blob) throw new Error("Image create nahi ho payi");
+
+      const formData = new FormData();
+      formData.append('image', blob);
+
+      const response = await fetch('https://api.imgbb.com/1/upload?key=9b1af349c562037cc117a5087c05c358', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) throw new Error("Upload fail");
+
+      const result = await response.json();
+      if (result.success && result.data?.url) {
+        setPreviewImage(result.data.url);
+      } else {
+        throw new Error("Upload fail");
+      }
 
     } catch (error) {
       console.error("Error generating receipt image:", error);
