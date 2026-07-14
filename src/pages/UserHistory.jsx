@@ -13,7 +13,7 @@ export default function UserHistory() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
+
 
   const activeUserId = userId || currentUser?.uid;
   const isAdmin = currentUser?.email === adminEmail;
@@ -104,8 +104,8 @@ export default function UserHistory() {
         return;
       }
 
-      // Mobile: upload to ImgBB first, then show modal with HTTPS URL
-      // (Long-press only works on https:// image src, not data: URLs in WebView)
+      // Mobile: upload to ImgBB, then open direct image in Chrome browser
+      // Chrome supports long-press → "Save image" to gallery
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
       if (!blob) throw new Error("Image create nahi ho payi");
 
@@ -120,8 +120,11 @@ export default function UserHistory() {
       if (!response.ok) throw new Error("Upload fail");
 
       const result = await response.json();
-      if (result.success && result.data?.url) {
-        setPreviewImage(result.data.url);
+      if (result.success && result.data?.image?.url) {
+        // Open the DIRECT image file URL in Chrome via Intent
+        const directUrl = result.data.image.url;
+        const rawUrl = directUrl.replace(/^https?:\/\//, '');
+        window.location.href = `intent://${rawUrl}#Intent;scheme=https;action=android.intent.action.VIEW;end;`;
       } else {
         throw new Error("Upload fail");
       }
@@ -135,7 +138,6 @@ export default function UserHistory() {
   };
 
   return (
-    <>
     <div className="container animate-fade-in">
       <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', gap: '1rem' }}>
         <button className="btn" onClick={() => navigate(-1)} style={{ padding: '0.5rem' }}>
@@ -376,74 +378,5 @@ export default function UserHistory() {
         </div>
       )}
     </div>
-
-      {/* Fullscreen Image Preview Modal for Mobile Gallery Save */}
-      {previewImage && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.95)',
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem'
-        }}>
-          {/* Close button */}
-          <button
-            onClick={() => setPreviewImage(null)}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              zIndex: 10000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >✕</button>
-
-          {/* Instruction */}
-          <p style={{
-            color: '#10b981',
-            fontSize: '0.95rem',
-            fontWeight: 600,
-            marginBottom: '1rem',
-            textAlign: 'center',
-            padding: '0.5rem 1rem',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            borderRadius: '8px',
-            border: '1px solid rgba(16, 185, 129, 0.3)'
-          }}>
-            👇 Image ko dabake rakho (long-press) → "Save image" dabao
-          </p>
-
-          {/* The actual receipt image - user long-presses this to save */}
-          <img
-            src={previewImage}
-            alt="Payment Receipt"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '75vh',
-              borderRadius: '8px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
-            }}
-          />
-        </div>
-      )}
-    </>
   );
 }
