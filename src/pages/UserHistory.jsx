@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, Calendar, Bolt, IndianRupee, Trash2, Download } fro
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function UserHistory() {
   const { userId } = useParams();
@@ -73,211 +73,72 @@ export default function UserHistory() {
     }
   };
 
-  const downloadPDF = async (record) => {
+  const downloadImage = async (record) => {
     setDownloadingId(record.id);
     try {
-      const doc = new jsPDF();
+      const element = document.getElementById(`receipt-template-${record.id}`);
+      if (!element) return;
+
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        logging: false,
+        useCORS: true
+      });
+
       const dateObj = new Date(record.date);
-      const dateStr = dateObj.toLocaleDateString('en-IN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      const timeStr = dateObj.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      // Header Colors & Styling
-      doc.setFillColor(15, 23, 42); // --bg-primary Dark Slate
-      doc.rect(0, 0, 210, 40, 'F');
-      
-      // Header Text
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.text("RENTAPP", 20, 25);
-      
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(200, 200, 200);
-      doc.text("EASY RENT & UTILITY RECEIPTS", 20, 32);
-      
-      // Receipt Details (Top Right)
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text("PAYMENT RECEIPT", 140, 20);
-      
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Receipt ID: ${record.id}`, 140, 27);
-      doc.text(`Date: ${dateStr}`, 140, 33);
-
-      // Reset text color for body
-      doc.setTextColor(30, 41, 59); // Dark grey
-
-      // Tenant info section
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.text("TENANT INFORMATION", 20, 55);
-      
-      doc.setDrawColor(226, 232, 240); // border line color
-      doc.setLineWidth(0.5);
-      doc.line(20, 58, 190, 58);
-      
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Name: ${userData.name || 'N/A'}`, 20, 66);
-      doc.text(`Phone: ${userData.phone || 'N/A'}`, 20, 72);
-      doc.text(`Email: ${userData.email || 'N/A'}`, 20, 78);
-      doc.text(`Payment Time: ${dateStr} at ${timeStr}`, 20, 84);
-
-      // Receipt Table Section
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("BILL BREAKDOWN", 20, 100);
-      doc.line(20, 103, 190, 103);
-
-      // Table Header
-      doc.setFillColor(241, 245, 249);
-      doc.rect(20, 107, 170, 8, 'F');
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text("DESCRIPTION", 25, 112.5);
-      doc.text("DETAILS / READINGS", 75, 112.5);
-      doc.text("AMOUNT", 160, 112.5);
-
-      // Table Rows
-      let yPos = 122;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9.5);
-      
-      // Row 1: Rent
-      doc.text("Monthly House Rent", 25, yPos);
-      doc.text("Base rent for the month", 75, yPos);
-      doc.text(`Rs ${record.rent}`, 160, yPos);
-      
-      yPos += 10;
-      doc.line(20, yPos - 6, 190, yPos - 6);
-
-      // Row 2: Electricity
-      doc.text("Electricity Charges", 25, yPos);
-      doc.text(`${record.totalUnits} Units @ Rs ${record.rate}/unit`, 75, yPos);
-      doc.text(`Rs ${record.totalUnits * record.rate}`, 160, yPos);
-
-      // Readings breakdown
-      yPos += 5;
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
-      doc.text(`Meter 1: ${record.m1_units} units (${record.m1_prev} to ${record.m1_curr})`, 75, yPos);
-      yPos += 4;
-      doc.text(`Meter 2: ${record.m2_units} units (${record.m2_prev} to ${record.m2_curr})`, 75, yPos);
-      
-      yPos += 6;
-      doc.line(20, yPos - 3, 190, yPos - 3);
-
-      // Reset color
-      doc.setTextColor(30, 41, 59);
-
-      // Total Amount Section
-      yPos += 5;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("GRAND TOTAL PAID", 75, yPos);
-      doc.setFontSize(13);
-      doc.setTextColor(16, 185, 129); // Green total
-      doc.text(`Rs ${record.totalDue}`, 160, yPos);
-
-      doc.setDrawColor(16, 185, 129);
-      doc.setLineWidth(1.5);
-      doc.line(20, yPos + 4, 190, yPos + 4);
-
-      // Paid Stamp
-      yPos += 20;
-      doc.setFillColor(209, 250, 229); // light green
-      doc.rect(20, yPos, 45, 12, 'F');
-      doc.setDrawColor(16, 185, 129);
-      doc.setLineWidth(1);
-      doc.rect(20, yPos, 45, 12, 'S');
-      doc.setTextColor(5, 150, 105); // forest green
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.text("STATUS: PAID", 26, yPos + 8.5);
-
-      // Footer
-      doc.setTextColor(148, 163, 184);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.text("This is a computer generated receipt and does not require a physical signature.", 20, 260);
-      doc.text("If you have any questions, please contact the landlord/administrator.", 20, 265);
-      
-      const filename = `${userData.name?.replace(/\s+/g, '_') || 'Tenant'}_Rent_Receipt_${dateObj.toLocaleString('default', { month: 'short' })}${dateObj.getFullYear()}.pdf`;
+      const filename = `${userData.name?.replace(/\s+/g, '_') || 'Tenant'}_Receipt_${dateObj.toLocaleString('default', { month: 'short' })}${dateObj.getFullYear()}.jpg`;
 
       const isAndroid = /android/i.test(navigator.userAgent);
       if (!isAndroid) {
-        doc.save(filename);
+        // Laptop/desktop: direct local download (instant & offline)
+        const imageURL = canvas.toDataURL('image/jpeg', 0.95);
+        const link = document.createElement('a');
+        link.href = imageURL;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         return;
       }
 
-      // Generate PDF Blob
-      const pdfBlob = doc.output('blob');
-      let downloadURL = "";
+      // Android / Mobile: use Web Share API to save directly to gallery
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      if (!blob) throw new Error("Blob creation failed");
 
-      // 1. Try Firebase Storage upload
-      try {
-        const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-        const { storage } = await import('../firebase');
-        const storageRef = ref(storage, `receipts/${activeUserId}/${record.id}.pdf`);
-        await uploadBytes(storageRef, pdfBlob);
-        downloadURL = await getDownloadURL(storageRef);
-      } catch (storageError) {
-        console.warn("Firebase Storage failed, trying tmpfiles.org fallback:", storageError);
-        
-        // 2. Try tmpfiles.org fallback with a 6-second timeout
-        try {
-          const formData = new FormData();
-          formData.append('file', pdfBlob, filename);
-          
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
-          
-          const response = await fetch('https://tmpfiles.org/api/v1/upload', {
-            method: 'POST',
-            body: formData,
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          
-          if (!response.ok) {
-            throw new Error("Temporary file upload failed");
-          }
-          
-          const result = await response.json();
-          if (result.status === "success" && result.data?.url) {
-            downloadURL = result.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
-          } else {
-            throw new Error("Failed to get temporary download link");
-          }
-        } catch (tmpFilesError) {
-          console.error("tmpfiles.org fallback also failed:", tmpFilesError);
-        }
-      }
+      const file = new File([blob], filename, { type: 'image/jpeg' });
 
-      if (!downloadURL) {
-        // Fallback to local save as a last resort on Android (even if it might fail in WebView, it's better than doing nothing)
-        doc.save(filename);
+      // Try Web Share API first (opens Android share sheet → Save to Gallery / WhatsApp etc.)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Payment Receipt',
+          text: `Receipt for ${userData.name || 'Tenant'}`
+        });
         return;
       }
 
-      // Redirect to external browser via Android Intent to avoid WebView download limitations
-      const rawUrl = downloadURL.replace(/^https?:\/\//, "");
-      const intentLink = `intent://${rawUrl}#Intent;scheme=https;action=android.intent.action.VIEW;end;`;
-      window.location.href = intentLink;
+      // Fallback: upload to ImgBB and open in browser
+      const formData = new FormData();
+      formData.append('image', blob);
+
+      const response = await fetch('https://api.imgbb.com/1/upload?key=9b1af349c562037cc117a5087c05c358', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) throw new Error("Upload failed");
+
+      const result = await response.json();
+      if (result.success && result.data?.url) {
+        window.open(result.data.url, '_blank');
+      } else {
+        throw new Error("Upload returned unsuccessful response");
+      }
+
     } catch (error) {
-      console.error("Error generating receipt download:", error);
-      alert("Failed to download receipt. Please check your internet connection.");
+      console.error("Error generating receipt image:", error);
+      alert("Failed to download receipt image. Please check your internet connection.");
     } finally {
       setDownloadingId(null);
     }
@@ -302,32 +163,192 @@ export default function UserHistory() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {history.map((record) => {
-            const dateStr = new Date(record.date).toLocaleDateString('en-IN', {
+            const recordDate = new Date(record.date);
+            const dateStr = recordDate.toLocaleDateString('en-IN', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
             });
+            const dateStrOnly = recordDate.toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+            const dateStrTime = dateStrOnly + ' at ' + recordDate.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }).toLowerCase();
 
             return (
-              <div key={record.id} className="glass-card" style={{ padding: '1.5rem' }}>
+              <div key={record.id} id={`record-${record.id}`} className="glass-card" style={{ padding: '1.5rem', position: 'relative' }}>
+                
+                {/* Hidden element for receipt screenshot rendering */}
+                <div id={`receipt-template-${record.id}`} style={{
+                  width: '595px',
+                  height: '842px',
+                  backgroundColor: '#ffffff',
+                  color: '#1e293b',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  position: 'fixed',
+                  left: '-9999px',
+                  top: '-9999px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                }}>
+                  {/* Inner wrapper for body alignment */}
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {/* Dark Header Banner */}
+                    <div style={{ 
+                      backgroundColor: '#0f172a', 
+                      color: '#ffffff', 
+                      padding: '2rem 2.5rem', 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center' 
+                    }}>
+                      <div style={{ textAlign: 'left' }}>
+                        <h2 style={{ fontSize: '2rem', margin: 0, fontWeight: 700, letterSpacing: '0.02em', color: '#ffffff' }}>RENTAPP</h2>
+                        <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0.25rem 0 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>EASY RENT & UTILITY RECEIPTS</p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <h3 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, letterSpacing: '0.02em', color: '#ffffff' }}>PAYMENT RECEIPT</h3>
+                        <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0.35rem 0 0 0' }}>Receipt ID: {record.id}</p>
+                        <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0.15rem 0 0 0' }}>Date: {dateStrOnly}</p>
+                      </div>
+                    </div>
+
+                    {/* Content Area */}
+                    <div style={{ padding: '2.5rem', textAlign: 'left' }}>
+                      {/* Tenant Info */}
+                      <div style={{ marginBottom: '2rem' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem 0' }}>TENANT INFORMATION</h4>
+                        <div style={{ width: '100%', height: '1px', backgroundColor: '#e2e8f0', marginBottom: '1rem' }}></div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
+                          <div><span style={{ color: '#64748b' }}>Name:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{userData.name || 'N/A'}</span></div>
+                          <div><span style={{ color: '#64748b' }}>Phone:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{userData.phone || 'N/A'}</span></div>
+                          <div><span style={{ color: '#64748b' }}>Email:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{userData.email || 'N/A'}</span></div>
+                          <div><span style={{ color: '#64748b' }}>Payment Time:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{dateStrTime}</span></div>
+                        </div>
+                      </div>
+
+                      {/* Bill Breakdown */}
+                      <div style={{ marginBottom: '2rem' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem 0' }}>BILL BREAKDOWN</h4>
+                        <div style={{ width: '100%', height: '1px', backgroundColor: '#e2e8f0', marginBottom: '1rem' }}></div>
+                        
+                        {/* Table structure */}
+                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+                          {/* Table Header */}
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '2fr 2fr 1fr', 
+                            padding: '0.6rem 0.8rem', 
+                            backgroundColor: '#f1f5f9', 
+                            fontSize: '0.8rem', 
+                            fontWeight: 700, 
+                            color: '#475569' 
+                          }}>
+                            <div>DESCRIPTION</div>
+                            <div>DETAILS / READINGS</div>
+                            <div style={{ textAlign: 'right' }}>AMOUNT</div>
+                          </div>
+
+                          {/* House Rent Row */}
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '2fr 2fr 1fr', 
+                            padding: '1rem 0.8rem', 
+                            borderBottom: '1px solid #e2e8f0', 
+                            fontSize: '0.9rem',
+                            alignItems: 'center'
+                          }}>
+                            <div style={{ fontWeight: 500, color: '#1e293b' }}>Monthly House Rent</div>
+                            <div style={{ color: '#475569' }}>Base rent for the month</div>
+                            <div style={{ textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>Rs {record.rent}</div>
+                          </div>
+
+                          {/* Electricity Row */}
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '2fr 2fr 1fr', 
+                            padding: '1rem 0.8rem', 
+                            borderBottom: '1px solid #e2e8f0', 
+                            fontSize: '0.9rem',
+                            alignItems: 'center'
+                          }}>
+                            <div style={{ fontWeight: 500, color: '#1e293b' }}>Electricity Charges</div>
+                            <div>
+                              <div style={{ color: '#1e293b' }}>{record.totalUnits} Units @ Rs {record.rate}/unit</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', marginTop: '0.2rem' }}>
+                                Meter 1: {record.m1_units} units ({record.m1_prev} to {record.m1_curr})
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
+                                Meter 2: {record.m2_units} units ({record.m2_prev} to {record.m2_curr})
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>Rs {record.totalUnits * record.rate}</div>
+                          </div>
+
+                          {/* Grand Total Row */}
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '3fr 1fr', 
+                            padding: '1rem 0.8rem', 
+                            fontSize: '0.95rem',
+                            fontWeight: 700,
+                            borderBottom: '4px solid #10b981'
+                          }}>
+                            <div style={{ color: '#0f172a', textTransform: 'uppercase' }}>GRAND TOTAL PAID</div>
+                            <div style={{ textAlign: 'right', color: '#10b981', fontSize: '1.05rem' }}>Rs {record.totalDue}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Paid Stamp */}
+                      <div style={{ display: 'inline-block', padding: '0.6rem 1.2rem', backgroundColor: '#d1fae5', border: '2.5px solid #10b981', color: '#047857', borderRadius: '4px', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.05em' }}>
+                        STATUS: PAID
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div style={{ 
+                    padding: '2rem 2.5rem', 
+                    borderTop: '1px solid #f1f5f9', 
+                    fontSize: '0.75rem', 
+                    color: '#94a3b8', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '0.2rem',
+                    textAlign: 'left'
+                  }}>
+                    <div>This is a computer generated receipt and does not require a physical signature.</div>
+                    <div>If you have any questions, please contact the landlord/administrator.</div>
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                     <Calendar size={16} />
                     <span style={{ fontWeight: '500' }}>{dateStr}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <div style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--success)', marginRight: '0.5rem' }}>
                       ₹{record.totalDue}
                     </div>
                     {downloadingId === record.id ? (
                       <div className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Loader2 size={14} className="animate-spin" /> Downloading...
+                        <Loader2 size={14} className="animate-spin" /> Saving...
                       </div>
                     ) : (
-                      <button className="btn" onClick={() => downloadPDF(record)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }} title="Download PDF Receipt">
-                        <Download size={14} /> Download PDF
+                      <button className="btn" onClick={() => downloadImage(record)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }} title="Download Image Receipt">
+                        <Download size={14} /> Save Image
                       </button>
                     )}
                     {isAdmin && (
