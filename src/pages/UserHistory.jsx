@@ -13,6 +13,7 @@ export default function UserHistory() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [pendingRedirectUrl, setPendingRedirectUrl] = useState(null);
 
 
   const activeUserId = userId || currentUser?.uid;
@@ -121,13 +122,10 @@ export default function UserHistory() {
 
       const result = await response.json();
       if (result.success && result.data?.image?.url) {
-        // Show instruction before opening Chrome
-        alert("Your receipt will open in Chrome.\n\n👉 Long-press on the image for 2-3 seconds\n👉 Tap 'Download image' or 'Save image'\n\nThe receipt will be saved to your gallery!");
-        
-        // Open the DIRECT image file URL in Chrome via Intent
         const directUrl = result.data.image.url;
         const rawUrl = directUrl.replace(/^https?:\/\//, '');
-        window.location.href = `intent://${rawUrl}#Intent;scheme=https;action=android.intent.action.VIEW;end;`;
+        const intentUrl = `intent://${rawUrl}#Intent;scheme=https;action=android.intent.action.VIEW;end;`;
+        setPendingRedirectUrl(intentUrl);
       } else {
         throw new Error("Upload fail");
       }
@@ -140,7 +138,14 @@ export default function UserHistory() {
     }
   };
 
+  const handleOpenInChrome = () => {
+    const url = pendingRedirectUrl;
+    setPendingRedirectUrl(null);
+    if (url) window.location.href = url;
+  };
+
   return (
+    <>
     <div className="container animate-fade-in">
       <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', gap: '1rem' }}>
         <button className="btn" onClick={() => navigate(-1)} style={{ padding: '0.5rem' }}>
@@ -381,5 +386,96 @@ export default function UserHistory() {
         </div>
       )}
     </div>
+
+      {/* Custom Instruction Popup */}
+      {pendingRedirectUrl && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            backgroundColor: '#1e293b',
+            borderRadius: '16px',
+            padding: '2rem',
+            maxWidth: '360px',
+            width: '100%',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📥</div>
+            <h3 style={{ color: '#f8fafc', fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.25rem 0' }}>
+              Save Receipt to Gallery
+            </h3>
+
+            <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)'
+              }}>
+                <span style={{ backgroundColor: '#3b82f6', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>1</span>
+                <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Image will open in <strong style={{ color: '#f8fafc' }}>Chrome</strong></span>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)'
+              }}>
+                <span style={{ backgroundColor: '#3b82f6', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>2</span>
+                <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}><strong style={{ color: '#f8fafc' }}>Long-press</strong> on the image for 2-3 seconds</span>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                padding: '0.6rem 0'
+              }}>
+                <span style={{ backgroundColor: '#3b82f6', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>3</span>
+                <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Tap <strong style={{ color: '#10b981' }}>"Download image"</strong> to save</span>
+              </div>
+            </div>
+
+            <button
+              onTouchEnd={handleOpenInChrome}
+              onClick={handleOpenInChrome}
+              style={{
+                width: '100%',
+                padding: '0.85rem',
+                backgroundColor: '#3b82f6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '1rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                letterSpacing: '0.02em'
+              }}
+            >
+              Open in Chrome →
+            </button>
+
+            <button
+              onTouchEnd={() => setPendingRedirectUrl(null)}
+              onClick={() => setPendingRedirectUrl(null)}
+              style={{
+                width: '100%',
+                padding: '0.6rem',
+                backgroundColor: 'transparent',
+                color: '#64748b',
+                border: 'none',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                marginTop: '0.5rem'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
