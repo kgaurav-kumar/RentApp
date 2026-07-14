@@ -117,6 +117,7 @@ export default function UserHistory() {
 
       const formData = new FormData();
       formData.append('image', blob);
+      formData.append('name', filename.replace('.jpg', ''));
 
       const response = await fetch('https://api.imgbb.com/1/upload?key=9b1af349c562037cc117a5087c05c358', {
         method: 'POST',
