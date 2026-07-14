@@ -89,7 +89,12 @@ export default function UserHistory() {
       });
 
       const dateObj = new Date(record.date);
-      const filename = `${userData.name?.replace(/\s+/g, '_') || 'Tenant'}_Receipt_${dateObj.toLocaleString('default', { month: 'short' })}${dateObj.getFullYear()}.jpg`;
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const mon = dateObj.toLocaleString('default', { month: 'short' });
+      const year = dateObj.getFullYear();
+      const hr = String(dateObj.getHours()).padStart(2, '0');
+      const min = String(dateObj.getMinutes()).padStart(2, '0');
+      const filename = `${userData.name?.replace(/\s+/g, '_') || 'Tenant'}_Receipt_${day}${mon}${year}_${hr}${min}.jpg`;
 
       const imageURL = canvas.toDataURL('image/jpeg', 0.92);
 
