@@ -13,7 +13,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   
   const [editingUser, setEditingUser] = useState(null);
-  const [editForm, setEditForm] = useState({ rent: 0, rate: 8, m1_prev: 0, m1_curr: 0, m2_prev: 0, m2_curr: 0 });
+  const [editForm, setEditForm] = useState({ rent: 0, rate: 8, m1_prev: 0, m1_curr: 0, m2_prev: 0, m2_curr: 0, startDate: '', endDate: '' });
   const [uploading, setUploading] = useState(null); // { id: userId, type: 'm1_prev'|'m1_curr'|'m2_prev'|'m2_curr' }
   const [sendingEmail, setSendingEmail] = useState(null); // userId of who is receiving an email
 
@@ -77,7 +77,9 @@ export default function AdminDashboard() {
       m1_prev: users[userId].m1_prev || 0,
       m1_curr: users[userId].m1_curr || 0,
       m2_prev: users[userId].m2_prev || 0,
-      m2_curr: users[userId].m2_curr || 0
+      m2_curr: users[userId].m2_curr || 0,
+      startDate: users[userId].startDate || '',
+      endDate: users[userId].endDate || ''
     });
   };
 
@@ -201,10 +203,28 @@ export default function AdminDashboard() {
         m1_units,
         m2_units,
         totalUnits,
-        totalDue
+        totalDue,
+        startDate: data.startDate || '',
+        endDate: data.endDate || ''
       };
 
       const updatedHistory = [historyEntry, ...(data.history || [])];
+
+      let newStartDate = data.startDate || '';
+      let newEndDate = data.endDate || '';
+
+      if (newEndDate) {
+        const nextStart = new Date(data.startDate);
+        nextStart.setMonth(nextStart.getMonth() + 1);
+        const nextStartDateStr = nextStart.toISOString().split('T')[0];
+        
+        const nextEnd = new Date(data.endDate);
+        nextEnd.setMonth(nextEnd.getMonth() + 1);
+        const nextEndDateStr = nextEnd.toISOString().split('T')[0];
+
+        newStartDate = nextStartDateStr;
+        newEndDate = nextEndDateStr;
+      }
 
       await setDoc(doc(db, "users", userId), {
         ...data,
@@ -215,7 +235,9 @@ export default function AdminDashboard() {
         m1_prev_photo: data.m1_curr_photo || data.m1_prev_photo || null,
         m2_prev_photo: data.m2_curr_photo || data.m2_prev_photo || null,
         m1_curr_photo: null,
-        m2_curr_photo: null
+        m2_curr_photo: null,
+        startDate: newStartDate,
+        endDate: newEndDate
       }, { merge: true });
       alert("Payment marked as received. Data has been reset for the next month.");
     } catch (error) {
@@ -484,6 +506,43 @@ export default function AdminDashboard() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
                   
+                  {/* Billing Cycle */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Month Start Date:</span>
+                    {editingUser === id ? (
+                      <input 
+                        type="date" 
+                        className="input-field" 
+                        style={{ padding: '0.4rem', width: '130px' }} 
+                        value={editForm.startDate || ''} 
+                        onChange={(e) => {
+                          const newStartDate = e.target.value;
+                          let newEndDate = '';
+                          if (newStartDate) {
+                            const date = new Date(newStartDate);
+                            date.setMonth(date.getMonth() + 1);
+                            newEndDate = date.toISOString().split('T')[0];
+                          }
+                          setEditForm({ ...editForm, startDate: newStartDate, endDate: newEndDate });
+                        }} 
+                      />
+                    ) : (
+                      <span style={{ fontWeight: '500' }}>{data.startDate ? new Date(data.startDate).toLocaleDateString() : 'Not Set'}</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Month End Date:</span>
+                    {editingUser === id ? (
+                      <span style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>
+                        {editForm.endDate ? new Date(editForm.endDate).toLocaleDateString() : 'Auto-calculated'}
+                      </span>
+                    ) : (
+                      <span style={{ fontWeight: '500' }}>{data.endDate ? new Date(data.endDate).toLocaleDateString() : 'Not Set'}</span>
+                    )}
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }}></div>
+
                   {/* Rent and Rate */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Rent Amount:</span>

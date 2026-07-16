@@ -107,6 +107,11 @@ export default function UserDashboard() {
           <h1 style={{ fontSize: '1.5rem' }}>Hello, {name}</h1>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{currentUser?.email}</p>
           <p style={{ margin: 0, marginTop: '0.25rem' }}>Your Dashboard</p>
+          {data?.startDate && data?.endDate && (
+             <p style={{ margin: 0, marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: '500' }}>
+               Billing Cycle: {new Date(data.startDate).toLocaleDateString()} - {new Date(data.endDate).toLocaleDateString()}
+             </p>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }} onClick={() => navigate('/history')}>
