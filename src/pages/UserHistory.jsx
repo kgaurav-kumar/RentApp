@@ -83,9 +83,11 @@ export default function UserHistory() {
 
       const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: 4,
         logging: false,
-        useCORS: true
+        useCORS: true,
+        width: 1080,
+        windowWidth: 1600
       });
 
       const dateObj = new Date(record.date);
@@ -94,9 +96,9 @@ export default function UserHistory() {
       const year = dateObj.getFullYear();
       const hr = String(dateObj.getHours()).padStart(2, '0');
       const min = String(dateObj.getMinutes()).padStart(2, '0');
-      const filename = `${userData.name?.replace(/\s+/g, '_') || 'Tenant'}_Receipt_${day}${mon}${year}_${hr}${min}.jpg`;
+      const filename = `${userData.name?.replace(/\s+/g, '_') || 'Tenant'}_Receipt_${day}${mon}${year}_${hr}${min}.png`;
 
-      const imageURL = canvas.toDataURL('image/jpeg', 0.92);
+      const imageURL = canvas.toDataURL('image/png');
 
       const isAndroid = /android/i.test(navigator.userAgent);
       if (!isAndroid) {
@@ -112,12 +114,12 @@ export default function UserHistory() {
 
       // Mobile: upload to ImgBB, then open direct image in Chrome browser
       // Chrome supports long-press → "Save image" to gallery
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error("Image create nahi ho payi");
 
       const formData = new FormData();
       formData.append('image', blob);
-      formData.append('name', filename.replace('.jpg', ''));
+      formData.append('name', filename.replace('.png', ''));
 
       const response = await fetch('https://api.imgbb.com/1/upload?key=9b1af349c562037cc117a5087c05c358', {
         method: 'POST',
@@ -148,27 +150,32 @@ export default function UserHistory() {
     const url = pendingRedirectUrl;
     setPendingRedirectUrl(null);
     if (url) window.location.href = url;
-  };
-
-  return (
+  };  return (
     <>
-    <div className="container animate-fade-in">
-      <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', gap: '1rem' }}>
-        <button className="btn" onClick={() => navigate(-1)} style={{ padding: '0.5rem' }}>
+    <div className="container animate-fade-in" style={{ paddingBottom: '3rem' }}>
+      <header className="glass-card" style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', gap: '1.25rem', padding: '1.25rem 1.5rem', background: 'var(--bg-glass-elevated)' }}>
+        <button className="btn btn-secondary" onClick={() => navigate(-1)} style={{ padding: '0.6rem', borderRadius: 'var(--radius-md)' }}>
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Payment History</h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{userData.name || 'Tenant'}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Payment History</h1>
+            <span className="badge badge-indigo">Receipt Logs</span>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Tenant: <strong style={{ color: 'var(--text-primary)' }}>{userData.name || 'Tenant'}</strong></p>
         </div>
       </header>
 
       {history.length === 0 ? (
-        <div className="glass-card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ color: 'var(--text-secondary)' }}>No history available for this user.</p>
+        <div className="glass-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+            <Calendar size={32} style={{ color: 'var(--text-muted)' }} />
+          </div>
+          <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>No Payment History Found</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No past rent receipts recorded for this user yet.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {history.map((record) => {
             const recordDate = new Date(record.date);
             const dateStr = recordDate.toLocaleDateString('en-IN', {
@@ -194,11 +201,13 @@ export default function UserHistory() {
                 
                 {/* Hidden element for receipt screenshot rendering */}
                 <div id={`receipt-template-${record.id}`} style={{
-                  width: '595px',
-                  height: '842px',
+                  width: '1080px',
                   backgroundColor: '#ffffff',
-                  color: '#1e293b',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  color: '#0f172a',
+                  fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+                  WebkitFontSmoothing: 'antialiased',
+                  MozOsxFontSmoothing: 'grayscale',
+                  textRendering: 'optimizeLegibility',
                   position: 'fixed',
                   left: '-9999px',
                   top: '-9999px',
@@ -206,60 +215,73 @@ export default function UserHistory() {
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  border: '2px solid #cbd5e1',
+                  boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)'
                 }}>
                   {/* Inner wrapper for body alignment */}
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {/* Dark Header Banner */}
+                    {/* 4K Super HD Gradient Header Banner */}
                     <div style={{ 
-                      backgroundColor: '#0f172a', 
+                      background: 'linear-gradient(135deg, #090d16 0%, #1e1b4b 60%, #090d16 100%)', 
                       color: '#ffffff', 
-                      padding: '2rem 2.5rem', 
+                      padding: '2.8rem 3.2rem', 
                       display: 'flex', 
                       justifyContent: 'space-between', 
-                      alignItems: 'center' 
+                      alignItems: 'center',
+                      borderBottom: '5px solid #6366f1' 
                     }}>
                       <div style={{ textAlign: 'left' }}>
-                        <h2 style={{ fontSize: '2rem', margin: 0, fontWeight: 700, letterSpacing: '0.02em', color: '#ffffff' }}>RENTAPP</h2>
-                        <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0.25rem 0 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>EASY RENT & UTILITY RECEIPTS</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <h2 style={{ fontSize: '2.8rem', margin: 0, fontWeight: 900, letterSpacing: '-0.03em', color: '#ffffff' }}>RENTAPP</h2>
+                          <span style={{ backgroundColor: '#6366f1', color: '#ffffff', fontSize: '0.85rem', fontWeight: 900, padding: '0.3rem 0.85rem', borderRadius: '16px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>OFFICIAL 4K RECEIPT</span>
+                        </div>
+                        <p style={{ fontSize: '1.05rem', color: '#a5b4fc', margin: '0.5rem 0 0 0', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>EASY RENT & UTILITY MANAGEMENT RECEIPTS</p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <h3 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, letterSpacing: '0.02em', color: '#ffffff' }}>PAYMENT RECEIPT</h3>
-                        <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0.35rem 0 0 0' }}>Receipt ID: {record.id}</p>
-                        <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0.15rem 0 0 0' }}>Date: {dateStrOnly}</p>
+                        <h3 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 900, letterSpacing: '0.08em', color: '#e0e7ff', textTransform: 'uppercase' }}>PAYMENT RECEIPT</h3>
+                        <p style={{ fontSize: '1rem', color: '#94a3b8', margin: '0.5rem 0 0 0', fontFamily: 'monospace', fontWeight: 600 }}>Receipt ID: #{record.id}</p>
+                        <p style={{ fontSize: '1rem', color: '#94a3b8', margin: '0.2rem 0 0 0' }}>Date: {dateStrOnly}</p>
                       </div>
                     </div>
 
                     {/* Content Area */}
-                    <div style={{ padding: '2.5rem', textAlign: 'left' }}>
-                      {/* Tenant Info */}
-                      <div style={{ marginBottom: '2rem' }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem 0' }}>TENANT INFORMATION</h4>
-                        <div style={{ width: '100%', height: '1px', backgroundColor: '#e2e8f0', marginBottom: '1rem' }}></div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
-                          <div><span style={{ color: '#64748b' }}>Name:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{userData.name || 'N/A'}</span></div>
-                          <div><span style={{ color: '#64748b' }}>Phone:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{userData.phone || 'N/A'}</span></div>
-                          <div><span style={{ color: '#64748b' }}>Email:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{userData.email || 'N/A'}</span></div>
-                          <div><span style={{ color: '#64748b' }}>Payment Time:</span> <span style={{ fontWeight: 500, color: '#1e293b' }}>{dateStrTime}</span></div>
+                    <div style={{ padding: '2.8rem 3.2rem', textAlign: 'left' }}>
+                      {/* Tenant Info Card */}
+                      <div style={{ 
+                        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                        border: '2px solid #e2e8f0',
+                        borderLeft: '6px solid #6366f1',
+                        borderRadius: '12px',
+                        padding: '1.6rem 2rem',
+                        marginBottom: '2.5rem'
+                      }}>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '0 0 1.1rem 0' }}>TENANT & PAYMENT INFORMATION</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem', fontSize: '1.15rem' }}>
+                          <div><span style={{ color: '#64748b', fontWeight: 500 }}>Tenant Name:</span> <strong style={{ fontWeight: 800, color: '#0f172a' }}>{userData.name || 'N/A'}</strong></div>
+                          <div><span style={{ color: '#64748b', fontWeight: 500 }}>Phone Number:</span> <strong style={{ fontWeight: 800, color: '#0f172a' }}>{userData.phone || 'N/A'}</strong></div>
+                          <div><span style={{ color: '#64748b', fontWeight: 500 }}>Email Address:</span> <strong style={{ fontWeight: 800, color: '#0f172a' }}>{userData.email || 'N/A'}</strong></div>
+                          <div><span style={{ color: '#64748b', fontWeight: 500 }}>Payment Time:</span> <strong style={{ fontWeight: 800, color: '#0f172a' }}>{dateStrTime}</strong></div>
                         </div>
                       </div>
 
                       {/* Bill Breakdown */}
-                      <div style={{ marginBottom: '2rem' }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem 0' }}>BILL BREAKDOWN</h4>
-                        <div style={{ width: '100%', height: '1px', backgroundColor: '#e2e8f0', marginBottom: '1rem' }}></div>
+                      <div style={{ marginBottom: '2.5rem' }}>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '0 0 1.2rem 0' }}>BILL ITEMIZED BREAKDOWN</h4>
                         
                         {/* Table structure */}
-                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', border: '2px solid #cbd5e1', borderRadius: '12px', overflow: 'hidden' }}>
                           {/* Table Header */}
                           <div style={{ 
                             display: 'grid', 
                             gridTemplateColumns: '2fr 2fr 1fr', 
-                            padding: '0.6rem 0.8rem', 
-                            backgroundColor: '#f1f5f9', 
-                            fontSize: '0.8rem', 
-                            fontWeight: 700, 
-                            color: '#475569' 
+                            padding: '1.1rem 1.4rem', 
+                            background: 'linear-gradient(90deg, #0f172a 0%, #1e293b 100%)', 
+                            fontSize: '1.05rem', 
+                            fontWeight: 900, 
+                            color: '#ffffff',
+                            letterSpacing: '0.06em' 
                           }}>
                             <div>DESCRIPTION</div>
                             <div>DETAILS / READINGS</div>
@@ -270,121 +292,180 @@ export default function UserHistory() {
                           <div style={{ 
                             display: 'grid', 
                             gridTemplateColumns: '2fr 2fr 1fr', 
-                            padding: '1rem 0.8rem', 
-                            borderBottom: '1px solid #e2e8f0', 
-                            fontSize: '0.9rem',
+                            padding: '1.4rem 1.4rem', 
+                            borderBottom: '1.5px solid #e2e8f0', 
+                            backgroundColor: '#ffffff',
+                            fontSize: '1.15rem',
                             alignItems: 'center'
                           }}>
-                            <div style={{ fontWeight: 500, color: '#1e293b' }}>Monthly House Rent</div>
-                            <div style={{ color: '#475569' }}>Base rent for the month</div>
-                            <div style={{ textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>Rs {record.rent}</div>
+                            <div style={{ fontWeight: 800, color: '#0f172a' }}>Monthly House Rent</div>
+                            <div style={{ color: '#475569', fontSize: '1.05rem' }}>Base rent charge</div>
+                            <div style={{ textAlign: 'right', fontWeight: 900, color: '#0f172a', fontSize: '1.25rem' }}>Rs {record.rent || 0}</div>
                           </div>
 
                           {/* Electricity Row */}
                           <div style={{ 
                             display: 'grid', 
                             gridTemplateColumns: '2fr 2fr 1fr', 
-                            padding: '1rem 0.8rem', 
-                            borderBottom: '1px solid #e2e8f0', 
-                            fontSize: '0.9rem',
+                            padding: '1.4rem 1.4rem', 
+                            borderBottom: '1.5px solid #e2e8f0', 
+                            backgroundColor: '#f8fafc',
+                            fontSize: '1.15rem',
                             alignItems: 'center'
                           }}>
-                            <div style={{ fontWeight: 500, color: '#1e293b' }}>Electricity Charges</div>
+                            <div style={{ fontWeight: 800, color: '#0f172a' }}>Electricity Charges</div>
                             <div>
-                              <div style={{ color: '#1e293b' }}>{record.totalUnits} Units @ Rs {record.rate}/unit</div>
-                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', marginTop: '0.2rem' }}>
-                                Meter 1: {record.m1_units} units ({record.m1_prev} to {record.m1_curr})
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
-                                Meter 2: {record.m2_units} units ({record.m2_prev} to {record.m2_curr})
+                              <div style={{ color: '#0f172a', fontWeight: 800 }}>{record.totalUnits || 0} Units @ Rs {record.rate || 8}/unit</div>
+                              <div style={{ fontSize: '0.98rem', color: '#475569', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '0.25rem 0.6rem', borderRadius: '6px', display: 'inline-block', fontWeight: 700 }}>Meter 1: {record.m1_units || 0} units ({record.m1_prev || 0} → {record.m1_curr || 0})</span>
+                                <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '0.25rem 0.6rem', borderRadius: '6px', display: 'inline-block', fontWeight: 700 }}>Meter 2: {record.m2_units || 0} units ({record.m2_prev || 0} → {record.m2_curr || 0})</span>
                               </div>
                             </div>
-                            <div style={{ textAlign: 'right', fontWeight: 600, color: '#1e293b' }}>Rs {record.totalUnits * record.rate}</div>
+                            <div style={{ textAlign: 'right', fontWeight: 900, color: '#0f172a', fontSize: '1.25rem' }}>Rs {(record.totalUnits || 0) * (record.rate || 8)}</div>
                           </div>
 
-                          {/* Grand Total Row */}
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '3fr 1fr', 
-                            padding: '1rem 0.8rem', 
-                            fontSize: '0.95rem',
-                            fontWeight: 700,
-                            borderBottom: '4px solid #10b981'
-                          }}>
-                            <div style={{ color: '#0f172a', textTransform: 'uppercase' }}>GRAND TOTAL PAID</div>
-                            <div style={{ textAlign: 'right', color: '#10b981', fontSize: '1.05rem' }}>Rs {record.totalDue}</div>
-                          </div>
+                          {/* Previous Remaining Row (if any) */}
+                          {record.prevRemaining > 0 && (
+                            <div style={{ 
+                              display: 'grid', 
+                              gridTemplateColumns: '2fr 2fr 1fr', 
+                              padding: '1.4rem 1.4rem', 
+                              borderBottom: '1.5px solid #e2e8f0', 
+                              backgroundColor: '#fffbe8',
+                              fontSize: '1.15rem',
+                              alignItems: 'center'
+                            }}>
+                              <div style={{ fontWeight: 800, color: '#b45309' }}>Previous Remaining Balance</div>
+                              <div style={{ color: '#78350f', fontSize: '1.05rem' }}>Carried forward arrears</div>
+                              <div style={{ textAlign: 'right', fontWeight: 900, color: '#b45309', fontSize: '1.25rem' }}>Rs {record.prevRemaining}</div>
+                            </div>
+                          )}
+
+                          {/* Financial Summary Breakdown */}
+                          {(() => {
+                            const lightBill = (record.totalUnits || 0) * (record.rate || 8);
+                            const rentAmt = record.rent || 0;
+                            const prevRem = record.prevRemaining || 0;
+                            const grandTotal = record.grandTotal || (rentAmt + lightBill + prevRem);
+                            const paidAmt = record.paidAmount !== undefined ? record.paidAmount : (record.grandTotal || record.totalDue || grandTotal);
+                            const remBal = record.remainingBalance !== undefined ? record.remainingBalance : Math.max(0, grandTotal - paidAmt);
+                            const statusTag = record.status || (remBal > 0 ? (paidAmt > 0 ? "PAID WITH REMAINING BALANCE" : "UNPAID") : "PAID");
+
+                            return (
+                              <div style={{ backgroundColor: '#ffffff', padding: '1.4rem 1.4rem 0.8rem 1.4rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', padding: '0.85rem 1.2rem', fontSize: '1.25rem', fontWeight: 900, backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1.5px solid #a7f3d0', marginBottom: '0.75rem' }}>
+                                  <div style={{ color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.05em' }}>GRAND TOTAL DUE</div>
+                                  <div style={{ textAlign: 'right', color: '#047857', fontSize: '1.45rem' }}>Rs {grandTotal}</div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', padding: '0.75rem 1.2rem', fontSize: '1.18rem', fontWeight: 800 }}>
+                                  <div style={{ color: '#0f172a', textTransform: 'uppercase' }}>PAID AMOUNT</div>
+                                  <div style={{ textAlign: 'right', color: '#047857', fontSize: '1.3rem' }}>Rs {paidAmt}</div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', padding: '0.85rem 1.2rem', fontSize: '1.25rem', fontWeight: 900, backgroundColor: remBal > 0 ? '#fff1f2' : '#f8fafc', borderRadius: '8px', border: remBal > 0 ? '1.5px solid #fecdd3' : '1.5px solid #e2e8f0', margin: '0.5rem 0 1rem 0' }}>
+                                  <div style={{ color: remBal > 0 ? '#be123c' : '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>REMAINING BALANCE</div>
+                                  <div style={{ textAlign: 'right', color: remBal > 0 ? '#be123c' : '#475569', fontSize: '1.45rem' }}>Rs {remBal}</div>
+                                </div>
+
+                                {/* Status Stamp */}
+                                <div style={{ textAlign: 'center', margin: '1.8rem 0 0.8rem 0' }}>
+                                  <div style={{
+                                    display: 'inline-block',
+                                    padding: '0.9rem 2.8rem',
+                                    backgroundColor: statusTag.includes('UNPAID') ? '#ffe4e6' : '#d1fae5',
+                                    border: statusTag.includes('UNPAID') ? '4px solid #f43f5e' : '4px solid #10b981',
+                                    color: statusTag.includes('UNPAID') ? '#be123c' : '#047857',
+                                    borderRadius: '10px',
+                                    fontSize: '1.3rem',
+                                    fontWeight: 900,
+                                    letterSpacing: '0.09em',
+                                    boxShadow: '0 6px 16px rgba(0,0,0,0.08)'
+                                  }}>
+                                    STATUS: {statusTag}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
-                      </div>
-
-                      {/* Paid Stamp */}
-                      <div style={{ display: 'inline-block', padding: '0.6rem 1.2rem', backgroundColor: '#d1fae5', border: '2.5px solid #10b981', color: '#047857', borderRadius: '4px', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                        STATUS: PAID
                       </div>
                     </div>
                   </div>
 
-                  {/* Footer */}
+                  {/* 4K Super HD Security Footer */}
                   <div style={{ 
-                    padding: '2rem 2.5rem', 
-                    borderTop: '1px solid #f1f5f9', 
-                    fontSize: '0.75rem', 
-                    color: '#94a3b8', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '0.2rem',
-                    textAlign: 'left'
+                    padding: '1.6rem 3.2rem', 
+                    backgroundColor: '#f8fafc',
+                    borderTop: '2px solid #e2e8f0', 
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.95rem', 
+                    color: '#64748b',
+                    fontWeight: 600
                   }}>
-                    <div>This is a computer generated receipt and does not require a physical signature.</div>
-                    <div>If you have any questions, please contact the landlord/administrator.</div>
+                    <div>🔒 Official RentApp 4K Electronic Document • Valid without physical signature</div>
+                    <div style={{ fontWeight: 800, color: '#475569' }}>RentApp Verification Portal</div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                    <Calendar size={16} />
-                    <span style={{ fontWeight: '500' }}>{dateStr}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-secondary)' }}>
+                    <div style={{ padding: '0.4rem', borderRadius: 'var(--radius-md)', background: 'rgba(255, 184, 0, 0.15)' }}>
+                      <Calendar size={18} style={{ color: '#ffca28' }} />
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-primary)' }}>{dateStr}</span>
                   </div>
-                  <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--success)', marginRight: '0.5rem' }}>
-                      ₹{record.totalDue}
+                  <div data-html2canvas-ignore="true" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div className="gradient-text-emerald" style={{ fontSize: '1.4rem', fontWeight: 800 }}>
+                      ₹{record.grandTotal || record.totalDue}
                     </div>
                     {downloadingId === record.id ? (
-                      <div className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Loader2 size={14} className="animate-spin" /> Saving...
-                      </div>
+                      <button className="btn btn-secondary" disabled style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }}>
+                        <Loader2 size={15} className="animate-spin" /> Saving...
+                      </button>
                     ) : (
-                      <button className="btn" onClick={() => downloadImage(record)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }} title="Download Image Receipt">
-                        <Download size={14} /> Save Image
+                      <button className="btn btn-primary" onClick={() => downloadImage(record)} style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }} title="Download Image Receipt">
+                        <Download size={15} /> Save Receipt
                       </button>
                     )}
                     {isAdmin && (
-                      <button className="btn" onClick={() => handleDeleteHistory(record.id)} style={{ padding: '0.4rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }} title="Delete Record">
+                      <button className="btn btn-danger" onClick={() => handleDeleteHistory(record.id)} style={{ padding: '0.55rem' }} title="Delete Record">
                         <Trash2 size={16} />
                       </button>
                     )}
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
-                  <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <IndianRupee size={12} /> Rent Amount
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                  <div style={{ background: 'rgba(11, 13, 20, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <IndianRupee size={14} style={{ color: 'var(--success)' }} /> House Rent
                     </div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>₹{record.rent}</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>₹{record.rent || 0}</div>
                   </div>
 
-                  <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Bolt size={12} /> Total Electricity
+                  <div style={{ background: 'rgba(11, 13, 20, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Bolt size={14} style={{ color: '#ffca28' }} /> Electricity Charges
                     </div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>
-                      {record.totalUnits} units <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--text-secondary)' }}>(₹{record.totalUnits * record.rate})</span>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {record.totalUnits || 0} units <span style={{ fontSize: '0.82rem', fontWeight: 500, color: '#ffca28' }}>(₹{(record.totalUnits || 0) * (record.rate || 8)})</span>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                      M1: {record.m1_units} | M2: {record.m2_units}
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      M1: {record.m1_units || 0} u | M2: {record.m2_units || 0} u
                     </div>
                   </div>
+
+                  {record.prevRemaining > 0 && (
+                    <div style={{ background: 'rgba(11, 13, 20, 0.6)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: '0.8rem', color: '#ffca28', marginBottom: '0.35rem' }}>
+                        Last Month Arrears
+                      </div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#ffca28' }}>₹{record.prevRemaining}</div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -398,66 +479,60 @@ export default function UserHistory() {
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          backgroundColor: 'rgba(5, 8, 15, 0.9)',
+          backdropFilter: 'blur(16px)',
           zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '1.5rem'
         }}>
-          <div style={{
-            backgroundColor: '#1e293b',
-            borderRadius: '16px',
+          <div className="glass-card animate-fade-in" style={{
             padding: '2rem',
-            maxWidth: '360px',
+            maxWidth: '380px',
             width: '100%',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            border: '1px solid rgba(99, 102, 241, 0.3)',
+            boxShadow: 'var(--glass-shadow), var(--glow-indigo)',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📥</div>
-            <h3 style={{ color: '#f8fafc', fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.25rem 0' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.75rem' }}>📥</div>
+            <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', fontWeight: 800, margin: '0 0 1.25rem 0' }}>
               Save Receipt to Gallery
             </h3>
 
             <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)'
+                padding: '0.7rem 0', borderBottom: '1px solid var(--border-color)'
               }}>
-                <span style={{ backgroundColor: '#3b82f6', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>1</span>
-                <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Image will open in <strong style={{ color: '#f8fafc' }}>Chrome</strong></span>
+                <span style={{ backgroundColor: 'var(--accent-indigo)', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>1</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Image will open in <strong style={{ color: 'var(--text-primary)' }}>Chrome</strong></span>
               </div>
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)'
+                padding: '0.7rem 0', borderBottom: '1px solid var(--border-color)'
               }}>
-                <span style={{ backgroundColor: '#3b82f6', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>2</span>
-                <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}><strong style={{ color: '#f8fafc' }}>Long-press</strong> on the image for 2-3 seconds</span>
+                <span style={{ backgroundColor: 'var(--accent-indigo)', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>2</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}><strong style={{ color: 'var(--text-primary)' }}>Long-press</strong> on the image for 2-3 seconds</span>
               </div>
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                padding: '0.6rem 0'
+                padding: '0.7rem 0'
               }}>
-                <span style={{ backgroundColor: '#3b82f6', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>3</span>
-                <span style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>Tap <strong style={{ color: '#10b981' }}>"Download image"</strong> to save</span>
+                <span style={{ backgroundColor: 'var(--accent-indigo)', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', minWidth: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>3</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Tap <strong style={{ color: '#34d399' }}>"Download image"</strong> to save</span>
               </div>
             </div>
 
             <button
               onTouchEnd={handleOpenInChrome}
               onClick={handleOpenInChrome}
+              className="btn btn-primary"
               style={{
                 width: '100%',
                 padding: '0.85rem',
-                backgroundColor: '#3b82f6',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
                 fontSize: '1rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                letterSpacing: '0.02em'
+                fontWeight: 700
               }}
             >
               Open in Chrome →
@@ -466,14 +541,11 @@ export default function UserHistory() {
             <button
               onTouchEnd={() => setPendingRedirectUrl(null)}
               onClick={() => setPendingRedirectUrl(null)}
+              className="btn btn-ghost"
               style={{
                 width: '100%',
                 padding: '0.6rem',
-                backgroundColor: 'transparent',
-                color: '#64748b',
-                border: 'none',
                 fontSize: '0.85rem',
-                cursor: 'pointer',
                 marginTop: '0.5rem'
               }}
             >

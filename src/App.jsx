@@ -6,7 +6,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserHistory from './pages/UserHistory';
 import Payment from './pages/Payment';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Loader2 } from 'lucide-react';
 import './index.css';
 
 // Protected Route Component

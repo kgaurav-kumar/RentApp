@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 
 const AuthContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }
