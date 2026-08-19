@@ -114,6 +114,8 @@ export default function AdminDashboard() {
       paidAmount: 0,
       status: 'UNPAID'
     });
+    // Scroll window to top so fixed modal overlay is perfectly centered on mobile viewports
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const downloadBillReceiptImage = async (uData) => {
@@ -883,82 +885,96 @@ export default function AdminDashboard() {
         }
 
         return (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 8, 15, 0.9)', backdropFilter: 'blur(16px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-            <div className="glass-card animate-fade-in" style={{ maxWidth: '450px', width: '100%', padding: '1.75rem', border: '1px solid rgba(255, 184, 0, 0.4)', boxShadow: 'var(--glass-shadow), var(--glow-gold)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 8, 15, 0.88)', backdropFilter: 'blur(16px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div className="glass-card animate-fade-in" style={{ maxWidth: '520px', width: '100%', padding: '1.25rem 1.5rem', border: '1px solid rgba(255, 184, 0, 0.4)', boxShadow: 'var(--glass-shadow), var(--glow-gold)', margin: 'auto' }}>
+              
+              {/* Modal Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.6rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <FileSpreadsheet size={22} style={{ color: 'var(--accent-gold)' }} />
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Generate Bill Modal</h3>
+                  <FileSpreadsheet size={20} style={{ color: 'var(--accent-gold)' }} />
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>Generate Bill</h3>
                 </div>
-                <button onClick={() => setGenerateBillUserId(null)} className="btn btn-ghost" style={{ padding: '0.2rem 0.6rem', fontSize: '1.1rem' }}>✕</button>
+                <button onClick={() => setGenerateBillUserId(null)} className="btn btn-ghost" style={{ padding: '0.15rem 0.5rem', fontSize: '1.1rem' }}>✕</button>
               </div>
 
-              <div style={{ marginBottom: '1rem', background: 'rgba(9, 13, 22, 0.6)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{uData.name || 'Tenant'}</div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{uData.phone} | {uData.email}</div>
+              {/* Tenant Header Info */}
+              <div style={{ marginBottom: '0.85rem', background: 'rgba(9, 13, 22, 0.6)', padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{uData.name || 'Tenant'}</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{uData.phone} | {uData.email}</div>
               </div>
 
-              {/* Bill Summary */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.25rem', fontSize: '0.9rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Base House Rent:</span>
-                  <span style={{ fontWeight: 600 }}>₹{rent}</span>
+              {/* Rent & Electricity Breakdown (2-Column Grid) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.85rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.03)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>Base House Rent</span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>₹{rent}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Electricity Charges ({totalUnits} units @ ₹{uData.rate || 8}):</span>
-                  <span style={{ fontWeight: 600 }}>₹{lightBill}</span>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>Electricity ({totalUnits}u @ ₹{uData.rate || 8})</span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>₹{lightBill}</strong>
                 </div>
+              </div>
 
-                <div className="input-group" style={{ marginBottom: '0.5rem', marginTop: '0.35rem' }}>
-                  <label htmlFor="modalPrevRemaining">Last Month Remaining Amount (Arrears):</label>
+              {/* Inputs (2-Column Grid: Arrears & Paid Amount) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label htmlFor="modalPrevRemaining" style={{ fontSize: '0.78rem', marginBottom: '0.2rem', color: 'var(--text-secondary)' }}>Last Month Arrears:</label>
                   <input 
                     type="number" 
                     id="modalPrevRemaining" 
                     className="input-field" 
-                    placeholder="Enter arrears amount (e.g. 0)"
+                    style={{ padding: '0.45rem 0.65rem', fontSize: '0.88rem' }}
+                    placeholder="e.g. 0"
                     value={billForm.prevRemaining === 0 ? '' : billForm.prevRemaining} 
                     onChange={(e) => setBillForm({ ...billForm, prevRemaining: e.target.value === '' ? '' : Number(e.target.value) })}
                   />
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.9rem', background: 'rgba(255, 184, 0, 0.14)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 184, 0, 0.3)', fontWeight: 800 }}>
-                  <span style={{ color: 'var(--text-primary)' }}>GRAND TOTAL DUE:</span>
-                  <span style={{ color: '#ffca28', fontSize: '1.15rem' }}>₹{grandTotal}</span>
-                </div>
-
-                <div className="input-group" style={{ marginBottom: '0.5rem', marginTop: '0.5rem' }}>
-                  <label htmlFor="modalPaidAmount">Current Month Paid Amount:</label>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label htmlFor="modalPaidAmount" style={{ fontSize: '0.78rem', marginBottom: '0.2rem', color: 'var(--text-secondary)' }}>Current Paid Amount:</label>
                   <input 
                     type="number" 
                     id="modalPaidAmount" 
                     className="input-field" 
-                    placeholder="Enter amount paid (e.g. 6000)"
+                    style={{ padding: '0.45rem 0.65rem', fontSize: '0.88rem' }}
+                    placeholder="e.g. 6000"
                     value={billForm.paidAmount === 0 ? '' : billForm.paidAmount} 
                     onChange={(e) => setBillForm({ ...billForm, paidAmount: e.target.value === '' ? '' : Number(e.target.value) })}
                   />
                 </div>
+              </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.9rem', background: remainingBalance > 0 ? 'rgba(255, 42, 133, 0.14)' : 'rgba(0, 230, 118, 0.14)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', fontWeight: 800 }}>
-                  <span style={{ color: 'var(--text-primary)' }}>REMAINING BALANCE:</span>
-                  <span style={{ color: remainingBalance > 0 ? '#ff77b2' : '#00e676', fontSize: '1.15rem' }}>₹{remainingBalance}</span>
+              {/* Dues Cards (2-Column Grid: Grand Total & Remaining) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
+                <div style={{ padding: '0.55rem 0.75rem', background: 'rgba(255, 184, 0, 0.14)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 184, 0, 0.3)' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block', fontWeight: 700 }}>GRAND TOTAL DUE</span>
+                  <span style={{ color: '#ffca28', fontSize: '1.1rem', fontWeight: 900 }}>₹{grandTotal}</span>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Bill Status Preview:</span>
-                  <span className={autoStatus === 'PAID' ? 'badge badge-success' : (autoStatus === 'PAID WITH REMAINING BALANCE' ? 'badge badge-warning' : 'badge badge-danger')}>
-                    {autoStatus}
-                  </span>
+                <div style={{ padding: '0.55rem 0.75rem', background: remainingBalance > 0 ? 'rgba(255, 42, 133, 0.14)' : 'rgba(0, 230, 118, 0.14)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block', fontWeight: 700 }}>REMAINING BALANCE</span>
+                  <span style={{ color: remainingBalance > 0 ? '#ff77b2' : '#00e676', fontSize: '1.1rem', fontWeight: 900 }}>₹{remainingBalance}</span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
-                <button onClick={handleSaveGenerateBill} className="btn btn-primary" style={{ flex: 1, padding: '0.8rem', fontSize: '0.95rem' }} disabled={isGeneratingReceipt}>
+              {/* Bill Status Preview Row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '0 0.2rem' }}>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.82rem' }}>Calculated Bill Status:</span>
+                <span className={autoStatus === 'PAID' ? 'badge badge-success' : (autoStatus === 'PAID WITH REMAINING BALANCE' ? 'badge badge-warning' : 'badge badge-danger')} style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}>
+                  {autoStatus}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button onClick={handleSaveGenerateBill} className="btn btn-primary" style={{ flex: 1, padding: '0.65rem', fontSize: '0.88rem' }} disabled={isGeneratingReceipt}>
                   {isGeneratingReceipt ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} Save & Download Bill Image
                 </button>
-                <button onClick={() => setGenerateBillUserId(null)} className="btn btn-secondary" disabled={isGeneratingReceipt}>
+                <button onClick={() => setGenerateBillUserId(null)} className="btn btn-secondary" style={{ padding: '0.65rem 1rem', fontSize: '0.88rem' }} disabled={isGeneratingReceipt}>
                   Cancel
                 </button>
               </div>
+
             </div>
           </div>
         );
